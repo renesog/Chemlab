@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, FlaskConical, GraduationCap, UsersRound } from "lucide-react";
+import { ArrowRight, CheckCircle2, FlaskConical, GraduationCap, UsersRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function Home() {
@@ -20,16 +20,16 @@ export default function Home() {
         <div className="role-grid">
           <button className="role-card teacher" onClick={() => router.push("/teacher/login")}>
             <span className="role-icon"><GraduationCap size={34} /></span>
-            <span className="role-copy"><strong>ฉันเป็นครู</strong><span>สร้างห้อง จัดโต๊ะ และติดตามการทดลอง</span></span>
+            <span className="role-copy"><small>สำหรับผู้จัดกิจกรรม</small><strong>ฉันเป็นครู</strong><span>สร้างห้อง จัดโต๊ะ และติดตามการทดลอง</span><b>เข้าสู่ระบบครู <ArrowRight size={17}/></b></span>
             <ArrowRight className="role-arrow" aria-hidden="true" />
           </button>
           <button className="role-card student" onClick={() => router.push("/join")}>
             <span className="role-icon"><UsersRound size={34} /></span>
-            <span className="role-copy"><strong>ฉันเป็นนักเรียน</strong><span>ใส่รหัสห้อง เลือกที่นั่ง และเริ่มทดลอง</span></span>
+            <span className="role-copy"><small>เข้าร่วมได้ทันที</small><strong>ฉันเป็นนักเรียน</strong><span>ใส่รหัสห้อง เลือกที่นั่ง และเริ่มทดลอง</span><b>ใส่รหัสห้อง <ArrowRight size={17}/></b></span>
             <ArrowRight className="role-arrow" aria-hidden="true" />
           </button>
         </div>
-        <p className="role-note">นักเรียนไม่ต้องสมัครบัญชี</p>
+        <div className="role-assurance"><span><CheckCircle2/>นักเรียนไม่ต้องสมัครบัญชี</span><span><CheckCircle2/>ใช้ได้ทั้งมือถือและคอมพิวเตอร์</span></div>
       </section>
     </main>
   );
