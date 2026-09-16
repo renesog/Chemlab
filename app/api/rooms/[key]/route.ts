@@ -27,7 +27,7 @@ export async function PATCH(request:Request,{params}:{params:Promise<{key:string
       let outcome={correct:false,feedback:"",score:1};
       const room=await mutateRoom(row.id,current=>{
         const student=current.students.find(s=>s.id===session.student_id);const levelId=body.levelId!;
-        if(current.status!=="RUNNING"||!student?.deskId||student.currentLevel!==levelId||!current.activity.levelIds.includes(levelId)||student.completed.includes(levelId))throw new Error("activity_unavailable");
+        if(current.status!=="RUNNING"||Date.now()<(current.gameStartsAt??0)||!student?.deskId||student.currentLevel!==levelId||!current.activity.levelIds.includes(levelId)||student.completed.includes(levelId))throw new Error("activity_unavailable");
         const correct=validateSequence(levelId,body.steps!);const attempts=(student.attemptsByLevel?.[levelId]??0)+(correct?0:1);const score=scoreForAttempts(attempts,current.activity.pointsByLevel[levelId]??5);const index=current.activity.levelIds.indexOf(levelId);
         outcome={correct,score,feedback:correct?"เยี่ยมมาก! ลำดับนี้แยกสารได้สำเร็จ":feedbackFor(levelId,body.steps!)};
         return{...current,students:current.students.map(s=>s.id===student.id?{...s,wrongAttempts:s.wrongAttempts+(correct?0:1),attemptsByLevel:{...s.attemptsByLevel,[levelId]:attempts},totalScore:s.totalScore+(correct?score:0),completed:correct?[...s.completed,levelId]:s.completed,currentLevel:correct?current.activity.levelIds[index+1]??levelId:s.currentLevel}:s)};
@@ -41,7 +41,7 @@ export async function PATCH(request:Request,{params}:{params:Promise<{key:string
 
 function applyAction(room:Classroom,body:Body,teacher:boolean,studentId?:string){
   if(teacher){
-    if(body.action==="status"&&body.status&&["OPEN","RUNNING","PAUSED","ENDED"].includes(body.status)&&room.status!=="ENDED")return{...room,status:body.status};
+    if(body.action==="status"&&body.status&&["OPEN","RUNNING","PAUSED","ENDED"].includes(body.status)&&room.status!=="ENDED")return{...room,status:body.status,gameStartsAt:body.status==="RUNNING"&&room.status!=="RUNNING"?Date.now()+6000:room.gameStartsAt};
     if(body.action==="activity"&&body.activity&&room.status==="OPEN"&&typeof body.activity.title==="string"&&body.activity.title.trim().length>=2&&body.activity.title.length<=60&&["PRESET","CUSTOM"].includes(body.activity.mode)&&Array.isArray(body.activity.levelIds)&&body.activity.levelIds.length>0&&body.activity.levelIds.length<=8&&new Set(body.activity.levelIds).size===body.activity.levelIds.length&&body.activity.levelIds.every(id=>Number.isInteger(id)&&id>=1&&id<=8&&Number.isInteger(body.activity!.pointsByLevel[id])&&body.activity!.pointsByLevel[id]>=1&&body.activity!.pointsByLevel[id]<=20))return{...room,activity:body.activity,students:room.students.map(s=>({...s,currentLevel:body.activity!.levelIds[0]}))};
     if(body.action==="deskLock"&&body.deskId&&typeof body.locked==="boolean")return{...room,desks:room.desks.map(d=>d.id===body.deskId?{...d,locked:body.locked!}:d)};
     if(body.action==="allLocks"&&typeof body.locked==="boolean")return{...room,desks:room.desks.map(d=>({...d,locked:body.locked!}))};

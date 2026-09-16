@@ -1,7 +1,9 @@
 "use client";
 
 import { AppShell } from "@/components/app-shell";
+import { useGameClock } from "@/components/game-start-countdown";
 import { currentStudentFrom, useDemo } from "@/lib/demo-store";
+import { gameIsLive } from "@/lib/live-game";
 import { LEVELS } from "@/lib/levels";
 import { ArrowDown, ArrowUp, CheckCircle2, CircleHelp, FlaskConical, RotateCcw, Send, Trophy, X } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -10,6 +12,7 @@ import { useMemo, useState } from "react";
 export default function Lab(){
   const store=useDemo();
   const router=useRouter();
+  const now=useGameClock();
   const {room,student}=currentStudentFrom(store);
   const activeLevels=room?.activity.levelIds??LEVELS.map(item=>item.id);
   const levelIndex=Math.max(0,activeLevels.indexOf(student?.currentLevel??activeLevels[0]));
@@ -22,7 +25,7 @@ export default function Lab(){
   const available=useMemo(()=>level.equipment.filter(e=>!selected.includes(e.id)),[level,selected]);
 
   if(!room||!student)return <AppShell title="ห้องทดลอง"><main className="empty-state"><h1>กรุณาเข้าห้องก่อน</h1><button className="primary-button" onClick={()=>router.push("/join")}>ใส่รหัสห้อง</button></main></AppShell>;
-  if(room.status!=="RUNNING"||!student.deskId)return <AppShell title="ห้องทดลอง"><main className="empty-state"><h1>กำลังรอคุณครูเริ่มเกม</h1><button className="primary-button" onClick={()=>router.push("/student/classroom")}>กลับไปห้องเรียน</button></main></AppShell>;
+  if(!gameIsLive(room,now)||!student.deskId)return <AppShell title="ห้องทดลอง"><main className="empty-state"><h1>กำลังรอคุณครูเริ่มเกม</h1><button className="primary-button" onClick={()=>router.push("/student/classroom")}>กลับไปห้องเรียน</button></main></AppShell>;
 
   function moveStep(index:number,direction:-1|1){
     const target=index+direction;
