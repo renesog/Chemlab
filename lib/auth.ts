@@ -1,6 +1,5 @@
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { adminAuth } from './firebase/admin';
 
 export type TeacherUser = {
   userId: string;
@@ -10,20 +9,31 @@ export type TeacherUser = {
 
 export async function getTeacherUser(): Promise<TeacherUser | null> {
   const requestHeaders = await headers();
-  const authorization = requestHeaders.get('authorization');
-  if (!authorization?.startsWith('Bearer ')) return null;
-
-  const idToken = authorization.slice(7);
-  try {
-    const decoded = await adminAuth.verifyIdToken(idToken);
+  
+  // 1. Direct persistent teacher ID header (no login required)
+  const teacherId = requestHeaders.get('x-teacher-id');
+  if (teacherId && teacherId.trim().length >= 6) {
     return {
-      userId: decoded.uid,
-      email: decoded.email ?? '',
-      displayName: decoded.name ?? decoded.email ?? '',
+      userId: teacherId.trim(),
+      email: 'teacher@local',
+      displayName: 'ครูผู้สอน',
     };
-  } catch {
-    return null;
   }
+
+  // 2. Authorization Bearer token header
+  const authorization = requestHeaders.get('authorization');
+  if (authorization?.startsWith('Bearer ')) {
+    const token = authorization.slice(7).trim();
+    if (token.length >= 6) {
+      return {
+        userId: token,
+        email: 'teacher@local',
+        displayName: 'ครูผู้สอน',
+      };
+    }
+  }
+
+  return null;
 }
 
 export async function requireTeacherUser(returnTo: string): Promise<TeacherUser> {

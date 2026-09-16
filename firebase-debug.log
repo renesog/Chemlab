@@ -1,43 +1,43 @@
-[debug] [2026-09-16T19:15:01.448Z] ----------------------------------------------------------------------
-[debug] [2026-09-16T19:15:01.450Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\MIS_\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js deploy --only hosting
-[debug] [2026-09-16T19:15:01.450Z] CLI Version:   15.30.1
-[debug] [2026-09-16T19:15:01.450Z] Platform:      win32
-[debug] [2026-09-16T19:15:01.451Z] Node Version:  v24.19.0
-[debug] [2026-09-16T19:15:01.451Z] Detected Agent: antigravity
-[debug] [2026-09-16T19:15:01.451Z] Time:          Thu Sep 17 2026 02:15:01 GMT+0700 (Indochina Time)
-[debug] [2026-09-16T19:15:01.451Z] ----------------------------------------------------------------------
+[debug] [2026-09-16T19:41:06.920Z] ----------------------------------------------------------------------
+[debug] [2026-09-16T19:41:06.922Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\MIS_\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js deploy --project chemlab-45006
+[debug] [2026-09-16T19:41:06.922Z] CLI Version:   15.30.1
+[debug] [2026-09-16T19:41:06.922Z] Platform:      win32
+[debug] [2026-09-16T19:41:06.922Z] Node Version:  v24.19.0
+[debug] [2026-09-16T19:41:06.922Z] Detected Agent: open_code
+[debug] [2026-09-16T19:41:06.922Z] Time:          Thu Sep 17 2026 02:41:06 GMT+0700 (Indochina Time)
+[debug] [2026-09-16T19:41:06.922Z] ----------------------------------------------------------------------
 [debug] 
-[debug] [2026-09-16T19:15:02.628Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-09-16T19:15:02.628Z] > authorizing via signed-in user (jirapanjr95@gmail.com)
-[debug] [2026-09-16T19:15:02.628Z] [iam] checking project chemlab-45006 for permissions ["firebase.projects.get","firebasehosting.sites.update"]
-[debug] [2026-09-16T19:15:02.637Z] Checked if tokens are valid: true, expires at: 1789589381817
-[debug] [2026-09-16T19:15:02.637Z] Checked if tokens are valid: true, expires at: 1789589381817
-[debug] [2026-09-16T19:15:02.638Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/chemlab-45006:testIamPermissions [none]
-[debug] [2026-09-16T19:15:02.638Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/chemlab-45006:testIamPermissions  x-goog-user-project=chemlab-45006
-[debug] [2026-09-16T19:15:02.638Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/chemlab-45006:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
-[debug] [2026-09-16T19:15:03.046Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/chemlab-45006:testIamPermissions 200
-[debug] [2026-09-16T19:15:03.046Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/chemlab-45006:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
-[debug] [2026-09-16T19:15:03.047Z] Checked if tokens are valid: true, expires at: 1789589381817
-[debug] [2026-09-16T19:15:03.047Z] Checked if tokens are valid: true, expires at: 1789589381817
-[debug] [2026-09-16T19:15:03.047Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/chemlab-45006 [none]
-[debug] [2026-09-16T19:15:03.593Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/chemlab-45006 200
-[debug] [2026-09-16T19:15:03.593Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/chemlab-45006 {"projectId":"chemlab-45006","projectNumber":"239212958243","displayName":"Chemlab","name":"projects/chemlab-45006","resources":{"hostingSite":"chemlab-45006"},"state":"ACTIVE","labels":{"firebase":"enabled"},"etag":"1_996ccb91-5acd-4998-8149-d97d0302b4c4"}
-[debug] [2026-09-16T19:15:06.104Z] defaultcredentials: writing to file C:\Users\MIS_\AppData\Roaming\firebase\jirapanjr95_gmail_com_application_default_credentials.json
-[debug] [2026-09-16T19:15:06.104Z] Checked if tokens are valid: true, expires at: 1789589381817
-[debug] [2026-09-16T19:15:06.105Z] Checked if tokens are valid: true, expires at: 1789589381817
-[debug] [2026-09-16T19:15:06.105Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites pageToken=&pageSize=10
-[debug] [2026-09-16T19:15:07.597Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites 200
-[debug] [2026-09-16T19:15:07.597Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites {"sites":[{"name":"projects/chemlab-45006/sites/chemlab","defaultUrl":"https://chemlab.web.app","appId":"1:239212958243:web:1b9d97edc9b4903b8a1796","type":"USER_SITE"},{"name":"projects/chemlab-45006/sites/chemlab-45006","defaultUrl":"https://chemlab-45006.web.app","type":"DEFAULT_SITE"}]}
-[debug] [2026-09-16T19:15:07.597Z] Checked if tokens are valid: true, expires at: 1789589381817
-[debug] [2026-09-16T19:15:07.597Z] Checked if tokens are valid: true, expires at: 1789589381817
-[debug] [2026-09-16T19:15:07.597Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites 
-[debug] [2026-09-16T19:15:08.392Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites 200
-[debug] [2026-09-16T19:15:08.392Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites {"sites":[{"name":"projects/chemlab-45006/sites/chemlab","defaultUrl":"https://chemlab.web.app","appId":"1:239212958243:web:1b9d97edc9b4903b8a1796","type":"USER_SITE"},{"name":"projects/chemlab-45006/sites/chemlab-45006","defaultUrl":"https://chemlab-45006.web.app","type":"DEFAULT_SITE"}]}
-[debug] [2026-09-16T19:15:08.392Z] Checked if tokens are valid: true, expires at: 1789589381817
-[debug] [2026-09-16T19:15:08.392Z] Checked if tokens are valid: true, expires at: 1789589381817
-[debug] [2026-09-16T19:15:08.392Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/chemlab-45006/webApps/-/config [none]
-[debug] [2026-09-16T19:15:09.645Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/chemlab-45006/webApps/-/config 200
-[debug] [2026-09-16T19:15:09.645Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/chemlab-45006/webApps/-/config {"projectId":"chemlab-45006","appId":"1:239212958243:web:1b9d97edc9b4903b8a1796","storageBucket":"chemlab-45006.firebasestorage.app","apiKey":"AIzaSyA7dGWxO-_DWu_ntBcbfw6QIlLVAhY1UGA","authDomain":"chemlab-45006.firebaseapp.com","messagingSenderId":"239212958243","measurementId":"G-XYS90FWDCN","projectNumber":"239212958243","version":"2"}
+[debug] [2026-09-16T19:41:08.744Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-09-16T19:41:08.744Z] > authorizing via signed-in user (jirapanjr95@gmail.com)
+[debug] [2026-09-16T19:41:08.744Z] [iam] checking project chemlab-45006 for permissions ["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2026-09-16T19:41:08.755Z] Checked if tokens are valid: true, expires at: 1789589381817
+[debug] [2026-09-16T19:41:08.755Z] Checked if tokens are valid: true, expires at: 1789589381817
+[debug] [2026-09-16T19:41:08.756Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/chemlab-45006:testIamPermissions [none]
+[debug] [2026-09-16T19:41:08.756Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/chemlab-45006:testIamPermissions  x-goog-user-project=chemlab-45006
+[debug] [2026-09-16T19:41:08.756Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/chemlab-45006:testIamPermissions {"permissions":["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-09-16T19:41:09.271Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/chemlab-45006:testIamPermissions 200
+[debug] [2026-09-16T19:41:09.271Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/chemlab-45006:testIamPermissions {"permissions":["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-09-16T19:41:09.271Z] Checked if tokens are valid: true, expires at: 1789589381817
+[debug] [2026-09-16T19:41:09.272Z] Checked if tokens are valid: true, expires at: 1789589381817
+[debug] [2026-09-16T19:41:09.272Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/chemlab-45006 [none]
+[debug] [2026-09-16T19:41:09.751Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/chemlab-45006 200
+[debug] [2026-09-16T19:41:09.751Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/chemlab-45006 {"projectId":"chemlab-45006","projectNumber":"239212958243","displayName":"Chemlab","name":"projects/chemlab-45006","resources":{"hostingSite":"chemlab-45006"},"state":"ACTIVE","labels":{"firebase":"enabled"},"etag":"1_996ccb91-5acd-4998-8149-d97d0302b4c4"}
+[debug] [2026-09-16T19:41:12.459Z] defaultcredentials: writing to file C:\Users\MIS_\AppData\Roaming\firebase\jirapanjr95_gmail_com_application_default_credentials.json
+[debug] [2026-09-16T19:41:12.460Z] Checked if tokens are valid: true, expires at: 1789589381817
+[debug] [2026-09-16T19:41:12.460Z] Checked if tokens are valid: true, expires at: 1789589381817
+[debug] [2026-09-16T19:41:12.460Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites pageToken=&pageSize=10
+[debug] [2026-09-16T19:41:13.731Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites 200
+[debug] [2026-09-16T19:41:13.731Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites {"sites":[{"name":"projects/chemlab-45006/sites/chemlab","defaultUrl":"https://chemlab.web.app","appId":"1:239212958243:web:1b9d97edc9b4903b8a1796","type":"USER_SITE"},{"name":"projects/chemlab-45006/sites/chemlab-45006","defaultUrl":"https://chemlab-45006.web.app","type":"DEFAULT_SITE"}]}
+[debug] [2026-09-16T19:41:13.731Z] Checked if tokens are valid: true, expires at: 1789589381817
+[debug] [2026-09-16T19:41:13.731Z] Checked if tokens are valid: true, expires at: 1789589381817
+[debug] [2026-09-16T19:41:13.731Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites 
+[debug] [2026-09-16T19:41:14.434Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites 200
+[debug] [2026-09-16T19:41:14.434Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites {"sites":[{"name":"projects/chemlab-45006/sites/chemlab","defaultUrl":"https://chemlab.web.app","appId":"1:239212958243:web:1b9d97edc9b4903b8a1796","type":"USER_SITE"},{"name":"projects/chemlab-45006/sites/chemlab-45006","defaultUrl":"https://chemlab-45006.web.app","type":"DEFAULT_SITE"}]}
+[debug] [2026-09-16T19:41:14.434Z] Checked if tokens are valid: true, expires at: 1789589381817
+[debug] [2026-09-16T19:41:14.434Z] Checked if tokens are valid: true, expires at: 1789589381817
+[debug] [2026-09-16T19:41:14.434Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/chemlab-45006/webApps/-/config [none]
+[debug] [2026-09-16T19:41:15.903Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/chemlab-45006/webApps/-/config 200
+[debug] [2026-09-16T19:41:15.903Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/chemlab-45006/webApps/-/config {"projectId":"chemlab-45006","appId":"1:239212958243:web:1b9d97edc9b4903b8a1796","storageBucket":"chemlab-45006.firebasestorage.app","apiKey":"AIzaSyA7dGWxO-_DWu_ntBcbfw6QIlLVAhY1UGA","authDomain":"chemlab-45006.firebaseapp.com","messagingSenderId":"239212958243","measurementId":"G-XYS90FWDCN","projectNumber":"239212958243","version":"2"}
 [info] 
    Thank you for trying our early preview of Next.js support on Firebase Hosting.
    During the preview, support is best-effort and breaking changes can be expected. Proceed with caution.
@@ -49,11 +49,148 @@
 
    We'd love to learn from you. Express your interest in helping us shape the future of Firebase Hosting: https://goo.gle/41enW5X
 
-[debug] [2026-09-16T19:15:15.869Z] Checked if tokens are valid: true, expires at: 1789589381817
-[debug] [2026-09-16T19:15:15.869Z] Checked if tokens are valid: true, expires at: 1789589381817
-[debug] [2026-09-16T19:15:15.869Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites/chemlab-45006 [none]
-[debug] [2026-09-16T19:15:16.871Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites/chemlab-45006 200
-[debug] [2026-09-16T19:15:16.871Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites/chemlab-45006 {"name":"projects/chemlab-45006/sites/chemlab-45006","defaultUrl":"https://chemlab-45006.web.app","type":"DEFAULT_SITE"}
+[debug] [2026-09-16T19:41:22.245Z] Checked if tokens are valid: true, expires at: 1789589381817
+[debug] [2026-09-16T19:41:22.246Z] Checked if tokens are valid: true, expires at: 1789589381817
+[debug] [2026-09-16T19:41:22.246Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites/chemlab-45006 [none]
+[debug] [2026-09-16T19:41:23.252Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites/chemlab-45006 200
+[debug] [2026-09-16T19:41:23.252Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites/chemlab-45006 {"name":"projects/chemlab-45006/sites/chemlab-45006","defaultUrl":"https://chemlab-45006.web.app","type":"DEFAULT_SITE"}
+[info] ▲ Next.js 16.2.6 (Turbopack)
+
+[info] - Environments: .env.local
+
+
+[info]   Creating an optimized production build ...
+
+[info] ✓ Compiled successfully in 3.8s
+
+[info]   Running TypeScript ...
+
+[info]   Finished TypeScript in 8.4s ...
+
+[info]   Collecting page data using 11 workers ...
+
+[info]   Generating static pages using 11 workers (0/12) ...
+
+[info]   Generating static pages using 11 workers (3/12) 
+
+[info]   Generating static pages using 11 workers (6/12) 
+
+[info]   Generating static pages using 11 workers (9/12) 
+
+[info] ✓ Generating static pages using 11 workers (12/12) in 297ms
+
+[info]   Finalizing page optimization ...
+
+[info] 
+
+[info] Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/attempt
+├ ƒ /api/rooms
+├ ƒ /api/rooms/[key]
+├ ƒ /api/teacher/profile
+├ ƒ /api/teacher/rooms
+├ ƒ /api/teacher/rooms/[id]
+├ ƒ /api/teacher/rooms/[id]/questions
+├ ○ /join
+├ ƒ /join/[code]
+├ ○ /student/avatar
+├ ○ /student/classroom
+├ ○ /student/lab
+├ ○ /student/results
+├ ƒ /teacher/classrooms/[id]
+├ ƒ /teacher/classrooms/[id]/questions
+├ ƒ /teacher/classrooms/[id]/report
+├ ○ /teacher/classrooms/new
+├ ○ /teacher/dashboard
+├ ○ /teacher/login
+└ ○ /teacher/profile
+
+
+[info] 
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+
+[info] Building a Cloud Function to run this application. This is needed due to:
+[info]  • non-static component /api/attempt/route
+[info]  • non-static component /api/rooms/[key]/route
+[info]  • non-static component /api/rooms/route
+[info]  • non-static component /api/teacher/profile/route
+[info]  • non-static component /api/teacher/rooms/[id]/questions/route
+[debug] [2026-09-16T19:41:41.714Z]  • non-static component /api/teacher/rooms/[id]/route
+[debug] [2026-09-16T19:41:41.714Z]  • non-static component /api/teacher/rooms/route
+[debug] [2026-09-16T19:41:41.714Z]  • non-static component /join/[code]/page
+[debug] [2026-09-16T19:41:41.714Z]  • non-static component /teacher/classrooms/[id]/page
+[debug] [2026-09-16T19:41:41.714Z]  • non-static component /teacher/classrooms/[id]/questions/page
+[debug] [2026-09-16T19:41:41.714Z]  • non-static component /teacher/classrooms/[id]/report/page
+[info]  • and 6 other reasons, use --debug to see more
+[info] 
+[debug] [2026-09-16T19:41:47.001Z] Checked if tokens are valid: true, expires at: 1789589381817
+[debug] [2026-09-16T19:41:47.001Z] Checked if tokens are valid: true, expires at: 1789589381817
+[debug] [2026-09-16T19:41:47.002Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites/chemlab-45006 [none]
+[debug] [2026-09-16T19:41:48.013Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites/chemlab-45006 200
+[debug] [2026-09-16T19:41:48.013Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites/chemlab-45006 {"name":"projects/chemlab-45006/sites/chemlab-45006","defaultUrl":"https://chemlab-45006.web.app","type":"DEFAULT_SITE"}
+[debug] [2026-09-16T19:41:48.549Z] Error: EPERM: operation not permitted, symlink 'C:\Users\MIS_\OneDrive - University of Phayao\Desktop\เกม for สื่อการสอน\chemclass-lab\node_modules\firebase-admin' -> 'C:\Users\MIS_\OneDrive - University of Phayao\Desktop\เกม for สื่อการสอน\chemclass-lab\.firebase\chemlab-45006\functions\.next\node_modules\firebase-admin-a14c8a5423a75469'
+[error] 
+[error] Error: An unexpected error has occurred.
+[debug] [2026-09-16T19:42:50.497Z] ----------------------------------------------------------------------
+[debug] [2026-09-16T19:42:50.498Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\MIS_\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js deploy --project chemlab-45006
+[debug] [2026-09-16T19:42:50.499Z] CLI Version:   15.30.1
+[debug] [2026-09-16T19:42:50.499Z] Platform:      win32
+[debug] [2026-09-16T19:42:50.499Z] Node Version:  v24.19.0
+[debug] [2026-09-16T19:42:50.499Z] Detected Agent: open_code
+[debug] [2026-09-16T19:42:50.499Z] Time:          Thu Sep 17 2026 02:42:50 GMT+0700 (Indochina Time)
+[debug] [2026-09-16T19:42:50.499Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-09-16T19:42:51.798Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-09-16T19:42:51.798Z] > authorizing via signed-in user (jirapanjr95@gmail.com)
+[debug] [2026-09-16T19:42:51.798Z] [iam] checking project chemlab-45006 for permissions ["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2026-09-16T19:42:51.808Z] Checked if tokens are valid: true, expires at: 1789589381817
+[debug] [2026-09-16T19:42:51.808Z] Checked if tokens are valid: true, expires at: 1789589381817
+[debug] [2026-09-16T19:42:51.809Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/chemlab-45006:testIamPermissions [none]
+[debug] [2026-09-16T19:42:51.809Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/chemlab-45006:testIamPermissions  x-goog-user-project=chemlab-45006
+[debug] [2026-09-16T19:42:51.809Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/chemlab-45006:testIamPermissions {"permissions":["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-09-16T19:42:53.128Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/chemlab-45006:testIamPermissions 200
+[debug] [2026-09-16T19:42:53.128Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/chemlab-45006:testIamPermissions {"permissions":["datastore.indexes.create","datastore.indexes.delete","datastore.indexes.list","datastore.indexes.update","firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-09-16T19:42:53.129Z] Checked if tokens are valid: true, expires at: 1789589381817
+[debug] [2026-09-16T19:42:53.129Z] Checked if tokens are valid: true, expires at: 1789589381817
+[debug] [2026-09-16T19:42:53.129Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/chemlab-45006 [none]
+[debug] [2026-09-16T19:42:53.641Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/chemlab-45006 200
+[debug] [2026-09-16T19:42:53.641Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/chemlab-45006 {"projectId":"chemlab-45006","projectNumber":"239212958243","displayName":"Chemlab","name":"projects/chemlab-45006","resources":{"hostingSite":"chemlab-45006"},"state":"ACTIVE","labels":{"firebase":"enabled"},"etag":"1_996ccb91-5acd-4998-8149-d97d0302b4c4"}
+[debug] [2026-09-16T19:42:56.505Z] defaultcredentials: writing to file C:\Users\MIS_\AppData\Roaming\firebase\jirapanjr95_gmail_com_application_default_credentials.json
+[debug] [2026-09-16T19:42:56.506Z] Checked if tokens are valid: true, expires at: 1789589381817
+[debug] [2026-09-16T19:42:56.506Z] Checked if tokens are valid: true, expires at: 1789589381817
+[debug] [2026-09-16T19:42:56.506Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites pageToken=&pageSize=10
+[debug] [2026-09-16T19:42:57.669Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites 200
+[debug] [2026-09-16T19:42:57.669Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites {"sites":[{"name":"projects/chemlab-45006/sites/chemlab","defaultUrl":"https://chemlab.web.app","appId":"1:239212958243:web:1b9d97edc9b4903b8a1796","type":"USER_SITE"},{"name":"projects/chemlab-45006/sites/chemlab-45006","defaultUrl":"https://chemlab-45006.web.app","type":"DEFAULT_SITE"}]}
+[debug] [2026-09-16T19:42:57.670Z] Checked if tokens are valid: true, expires at: 1789589381817
+[debug] [2026-09-16T19:42:57.670Z] Checked if tokens are valid: true, expires at: 1789589381817
+[debug] [2026-09-16T19:42:57.670Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites 
+[debug] [2026-09-16T19:42:58.364Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites 200
+[debug] [2026-09-16T19:42:58.364Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites {"sites":[{"name":"projects/chemlab-45006/sites/chemlab","defaultUrl":"https://chemlab.web.app","appId":"1:239212958243:web:1b9d97edc9b4903b8a1796","type":"USER_SITE"},{"name":"projects/chemlab-45006/sites/chemlab-45006","defaultUrl":"https://chemlab-45006.web.app","type":"DEFAULT_SITE"}]}
+[debug] [2026-09-16T19:42:58.365Z] Checked if tokens are valid: true, expires at: 1789589381817
+[debug] [2026-09-16T19:42:58.365Z] Checked if tokens are valid: true, expires at: 1789589381817
+[debug] [2026-09-16T19:42:58.365Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/chemlab-45006/webApps/-/config [none]
+[debug] [2026-09-16T19:42:59.834Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/chemlab-45006/webApps/-/config 200
+[debug] [2026-09-16T19:42:59.834Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/chemlab-45006/webApps/-/config {"projectId":"chemlab-45006","appId":"1:239212958243:web:1b9d97edc9b4903b8a1796","storageBucket":"chemlab-45006.firebasestorage.app","apiKey":"AIzaSyA7dGWxO-_DWu_ntBcbfw6QIlLVAhY1UGA","authDomain":"chemlab-45006.firebaseapp.com","messagingSenderId":"239212958243","measurementId":"G-XYS90FWDCN","projectNumber":"239212958243","version":"2"}
+[info] 
+   Thank you for trying our early preview of Next.js support on Firebase Hosting.
+   During the preview, support is best-effort and breaking changes can be expected. Proceed with caution.
+   The integration is known to work with Next.js version 12 - 16.0. You may encounter errors.
+
+   Documentation: https://firebase.google.com/docs/hosting/frameworks/nextjs
+   File a bug: https://github.com/firebase/firebase-tools/issues/new?template=bug_report.md
+   Submit a feature request: https://github.com/firebase/firebase-tools/issues/new?template=feature_request.md
+
+   We'd love to learn from you. Express your interest in helping us shape the future of Firebase Hosting: https://goo.gle/41enW5X
+
+[debug] [2026-09-16T19:43:06.404Z] Checked if tokens are valid: true, expires at: 1789589381817
+[debug] [2026-09-16T19:43:06.404Z] Checked if tokens are valid: true, expires at: 1789589381817
+[debug] [2026-09-16T19:43:06.404Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites/chemlab-45006 [none]
+[debug] [2026-09-16T19:43:07.497Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites/chemlab-45006 200
+[debug] [2026-09-16T19:43:07.497Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites/chemlab-45006 {"name":"projects/chemlab-45006/sites/chemlab-45006","defaultUrl":"https://chemlab-45006.web.app","type":"DEFAULT_SITE"}
 [info] ▲ Next.js 16.2.6 (Turbopack)
 
 [info] - Environments: .env.local
@@ -65,7 +202,7 @@
 
 [info]   Running TypeScript ...
 
-[info]   Finished TypeScript in 6.3s ...
+[info]   Finished TypeScript in 7.1s ...
 
 [info]   Collecting page data using 11 workers ...
 
@@ -77,144 +214,7 @@
 
 [info]   Generating static pages using 11 workers (9/12) 
 
-[info] ✓ Generating static pages using 11 workers (12/12) in 349ms
-
-[info]   Finalizing page optimization ...
-
-[info] 
-
-[info] Route (app)
-┌ ○ /
-├ ○ /_not-found
-├ ƒ /api/attempt
-├ ƒ /api/rooms
-├ ƒ /api/rooms/[key]
-├ ƒ /api/teacher/profile
-├ ƒ /api/teacher/rooms
-├ ƒ /api/teacher/rooms/[id]
-├ ƒ /api/teacher/rooms/[id]/questions
-├ ○ /join
-├ ƒ /join/[code]
-├ ○ /student/avatar
-├ ○ /student/classroom
-├ ○ /student/lab
-├ ○ /student/results
-├ ƒ /teacher/classrooms/[id]
-├ ƒ /teacher/classrooms/[id]/questions
-├ ƒ /teacher/classrooms/[id]/report
-├ ○ /teacher/classrooms/new
-├ ○ /teacher/dashboard
-├ ○ /teacher/login
-└ ○ /teacher/profile
-
-
-
-[info] ○  (Static)   prerendered as static content
-ƒ  (Dynamic)  server-rendered on demand
-
-
-[info] Building a Cloud Function to run this application. This is needed due to:
-[info]  • non-static component /api/attempt/route
-[info]  • non-static component /api/rooms/[key]/route
-[info]  • non-static component /api/rooms/route
-[info]  • non-static component /api/teacher/profile/route
-[info]  • non-static component /api/teacher/rooms/[id]/questions/route
-[debug] [2026-09-16T19:15:33.505Z]  • non-static component /api/teacher/rooms/[id]/route
-[debug] [2026-09-16T19:15:33.505Z]  • non-static component /api/teacher/rooms/route
-[debug] [2026-09-16T19:15:33.505Z]  • non-static component /join/[code]/page
-[debug] [2026-09-16T19:15:33.505Z]  • non-static component /teacher/classrooms/[id]/page
-[debug] [2026-09-16T19:15:33.505Z]  • non-static component /teacher/classrooms/[id]/questions/page
-[debug] [2026-09-16T19:15:33.505Z]  • non-static component /teacher/classrooms/[id]/report/page
-[info]  • and 6 other reasons, use --debug to see more
-[info] 
-[debug] [2026-09-16T19:15:37.783Z] Checked if tokens are valid: true, expires at: 1789589381817
-[debug] [2026-09-16T19:15:37.783Z] Checked if tokens are valid: true, expires at: 1789589381817
-[debug] [2026-09-16T19:15:37.783Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites/chemlab-45006 [none]
-[debug] [2026-09-16T19:15:38.818Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites/chemlab-45006 200
-[debug] [2026-09-16T19:15:38.818Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites/chemlab-45006 {"name":"projects/chemlab-45006/sites/chemlab-45006","defaultUrl":"https://chemlab-45006.web.app","type":"DEFAULT_SITE"}
-[debug] [2026-09-16T19:15:39.335Z] Error: EPERM: operation not permitted, symlink 'C:\Users\MIS_\OneDrive - University of Phayao\Desktop\เกม for สื่อการสอน\chemclass-lab\node_modules\firebase-admin' -> 'C:\Users\MIS_\OneDrive - University of Phayao\Desktop\เกม for สื่อการสอน\chemclass-lab\.firebase\chemlab-45006\functions\.next\node_modules\firebase-admin-a14c8a5423a75469'
-[error] 
-[error] Error: An unexpected error has occurred.
-[debug] [2026-09-16T19:17:04.436Z] ----------------------------------------------------------------------
-[debug] [2026-09-16T19:17:04.437Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\MIS_\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js deploy --only hosting
-[debug] [2026-09-16T19:17:04.438Z] CLI Version:   15.30.1
-[debug] [2026-09-16T19:17:04.438Z] Platform:      win32
-[debug] [2026-09-16T19:17:04.438Z] Node Version:  v24.19.0
-[debug] [2026-09-16T19:17:04.438Z] Detected Agent: antigravity
-[debug] [2026-09-16T19:17:04.438Z] Time:          Thu Sep 17 2026 02:17:04 GMT+0700 (Indochina Time)
-[debug] [2026-09-16T19:17:04.438Z] ----------------------------------------------------------------------
-[debug] 
-[debug] [2026-09-16T19:17:05.698Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-09-16T19:17:05.699Z] > authorizing via signed-in user (jirapanjr95@gmail.com)
-[debug] [2026-09-16T19:17:05.699Z] [iam] checking project chemlab-45006 for permissions ["firebase.projects.get","firebasehosting.sites.update"]
-[debug] [2026-09-16T19:17:05.711Z] Checked if tokens are valid: true, expires at: 1789589381817
-[debug] [2026-09-16T19:17:05.711Z] Checked if tokens are valid: true, expires at: 1789589381817
-[debug] [2026-09-16T19:17:05.712Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/chemlab-45006:testIamPermissions [none]
-[debug] [2026-09-16T19:17:05.712Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/chemlab-45006:testIamPermissions  x-goog-user-project=chemlab-45006
-[debug] [2026-09-16T19:17:05.712Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/chemlab-45006:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
-[debug] [2026-09-16T19:17:07.058Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/chemlab-45006:testIamPermissions 200
-[debug] [2026-09-16T19:17:07.059Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/chemlab-45006:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
-[debug] [2026-09-16T19:17:07.059Z] Checked if tokens are valid: true, expires at: 1789589381817
-[debug] [2026-09-16T19:17:07.059Z] Checked if tokens are valid: true, expires at: 1789589381817
-[debug] [2026-09-16T19:17:07.059Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/chemlab-45006 [none]
-[debug] [2026-09-16T19:17:07.830Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/chemlab-45006 200
-[debug] [2026-09-16T19:17:07.830Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/chemlab-45006 {"projectId":"chemlab-45006","projectNumber":"239212958243","displayName":"Chemlab","name":"projects/chemlab-45006","resources":{"hostingSite":"chemlab-45006"},"state":"ACTIVE","labels":{"firebase":"enabled"},"etag":"1_996ccb91-5acd-4998-8149-d97d0302b4c4"}
-[debug] [2026-09-16T19:17:10.410Z] defaultcredentials: writing to file C:\Users\MIS_\AppData\Roaming\firebase\jirapanjr95_gmail_com_application_default_credentials.json
-[debug] [2026-09-16T19:17:10.412Z] Checked if tokens are valid: true, expires at: 1789589381817
-[debug] [2026-09-16T19:17:10.412Z] Checked if tokens are valid: true, expires at: 1789589381817
-[debug] [2026-09-16T19:17:10.412Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites pageToken=&pageSize=10
-[debug] [2026-09-16T19:17:11.628Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites 200
-[debug] [2026-09-16T19:17:11.628Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites {"sites":[{"name":"projects/chemlab-45006/sites/chemlab","defaultUrl":"https://chemlab.web.app","appId":"1:239212958243:web:1b9d97edc9b4903b8a1796","type":"USER_SITE"},{"name":"projects/chemlab-45006/sites/chemlab-45006","defaultUrl":"https://chemlab-45006.web.app","type":"DEFAULT_SITE"}]}
-[debug] [2026-09-16T19:17:11.628Z] Checked if tokens are valid: true, expires at: 1789589381817
-[debug] [2026-09-16T19:17:11.628Z] Checked if tokens are valid: true, expires at: 1789589381817
-[debug] [2026-09-16T19:17:11.629Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites 
-[debug] [2026-09-16T19:17:12.558Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites 200
-[debug] [2026-09-16T19:17:12.558Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites {"sites":[{"name":"projects/chemlab-45006/sites/chemlab","defaultUrl":"https://chemlab.web.app","appId":"1:239212958243:web:1b9d97edc9b4903b8a1796","type":"USER_SITE"},{"name":"projects/chemlab-45006/sites/chemlab-45006","defaultUrl":"https://chemlab-45006.web.app","type":"DEFAULT_SITE"}]}
-[debug] [2026-09-16T19:17:12.559Z] Checked if tokens are valid: true, expires at: 1789589381817
-[debug] [2026-09-16T19:17:12.559Z] Checked if tokens are valid: true, expires at: 1789589381817
-[debug] [2026-09-16T19:17:12.559Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/chemlab-45006/webApps/-/config [none]
-[debug] [2026-09-16T19:17:13.857Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/chemlab-45006/webApps/-/config 200
-[debug] [2026-09-16T19:17:13.857Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/chemlab-45006/webApps/-/config {"projectId":"chemlab-45006","appId":"1:239212958243:web:1b9d97edc9b4903b8a1796","storageBucket":"chemlab-45006.firebasestorage.app","apiKey":"AIzaSyA7dGWxO-_DWu_ntBcbfw6QIlLVAhY1UGA","authDomain":"chemlab-45006.firebaseapp.com","messagingSenderId":"239212958243","measurementId":"G-XYS90FWDCN","projectNumber":"239212958243","version":"2"}
-[info] 
-   Thank you for trying our early preview of Next.js support on Firebase Hosting.
-   During the preview, support is best-effort and breaking changes can be expected. Proceed with caution.
-   The integration is known to work with Next.js version 12 - 16.0. You may encounter errors.
-
-   Documentation: https://firebase.google.com/docs/hosting/frameworks/nextjs
-   File a bug: https://github.com/firebase/firebase-tools/issues/new?template=bug_report.md
-   Submit a feature request: https://github.com/firebase/firebase-tools/issues/new?template=feature_request.md
-
-   We'd love to learn from you. Express your interest in helping us shape the future of Firebase Hosting: https://goo.gle/41enW5X
-
-[debug] [2026-09-16T19:17:20.053Z] Checked if tokens are valid: true, expires at: 1789589381817
-[debug] [2026-09-16T19:17:20.053Z] Checked if tokens are valid: true, expires at: 1789589381817
-[debug] [2026-09-16T19:17:20.053Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites/chemlab-45006 [none]
-[debug] [2026-09-16T19:17:21.189Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites/chemlab-45006 200
-[debug] [2026-09-16T19:17:21.189Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites/chemlab-45006 {"name":"projects/chemlab-45006/sites/chemlab-45006","defaultUrl":"https://chemlab-45006.web.app","type":"DEFAULT_SITE"}
-[info] ▲ Next.js 16.2.6 (Turbopack)
-
-[info] - Environments: .env.local
-
-
-[info]   Creating an optimized production build ...
-
-[info] ✓ Compiled successfully in 4.2s
-
-[info]   Running TypeScript ...
-
-[info]   Finished TypeScript in 6.2s ...
-
-[info]   Collecting page data using 11 workers ...
-
-[info]   Generating static pages using 11 workers (0/12) ...
-
-[info]   Generating static pages using 11 workers (3/12) 
-
-[info]   Generating static pages using 11 workers (6/12) 
-
-[info]   Generating static pages using 11 workers (9/12) 
-
-[info] ✓ Generating static pages using 11 workers (12/12) in 301ms
+[info] ✓ Generating static pages using 11 workers (12/12) in 319ms
 
 [info]   Finalizing page optimization ...
 
@@ -256,195 +256,19 @@
 [info]  • non-static component /api/rooms/route
 [info]  • non-static component /api/teacher/profile/route
 [info]  • non-static component /api/teacher/rooms/[id]/questions/route
-[debug] [2026-09-16T19:17:37.709Z]  • non-static component /api/teacher/rooms/[id]/route
-[debug] [2026-09-16T19:17:37.709Z]  • non-static component /api/teacher/rooms/route
-[debug] [2026-09-16T19:17:37.709Z]  • non-static component /join/[code]/page
-[debug] [2026-09-16T19:17:37.709Z]  • non-static component /teacher/classrooms/[id]/page
-[debug] [2026-09-16T19:17:37.709Z]  • non-static component /teacher/classrooms/[id]/questions/page
-[debug] [2026-09-16T19:17:37.709Z]  • non-static component /teacher/classrooms/[id]/report/page
+[debug] [2026-09-16T19:43:25.157Z]  • non-static component /api/teacher/rooms/[id]/route
+[debug] [2026-09-16T19:43:25.157Z]  • non-static component /api/teacher/rooms/route
+[debug] [2026-09-16T19:43:25.157Z]  • non-static component /join/[code]/page
+[debug] [2026-09-16T19:43:25.157Z]  • non-static component /teacher/classrooms/[id]/page
+[debug] [2026-09-16T19:43:25.157Z]  • non-static component /teacher/classrooms/[id]/questions/page
+[debug] [2026-09-16T19:43:25.157Z]  • non-static component /teacher/classrooms/[id]/report/page
 [info]  • and 6 other reasons, use --debug to see more
 [info] 
-[debug] [2026-09-16T19:17:42.701Z] Checked if tokens are valid: true, expires at: 1789589381817
-[debug] [2026-09-16T19:17:42.701Z] Checked if tokens are valid: true, expires at: 1789589381817
-[debug] [2026-09-16T19:17:42.701Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites/chemlab-45006 [none]
-[debug] [2026-09-16T19:17:43.681Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites/chemlab-45006 200
-[debug] [2026-09-16T19:17:43.681Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites/chemlab-45006 {"name":"projects/chemlab-45006/sites/chemlab-45006","defaultUrl":"https://chemlab-45006.web.app","type":"DEFAULT_SITE"}
-[debug] [2026-09-16T19:17:44.246Z] Error: EPERM: operation not permitted, symlink 'C:\Users\MIS_\OneDrive - University of Phayao\Desktop\เกม for สื่อการสอน\chemclass-lab\node_modules\firebase-admin' -> 'C:\Users\MIS_\OneDrive - University of Phayao\Desktop\เกม for สื่อการสอน\chemclass-lab\.firebase\chemlab-45006\functions\.next\node_modules\firebase-admin-a14c8a5423a75469'
-[error] 
-[error] Error: An unexpected error has occurred.
-[debug] [2026-09-16T19:18:21.219Z] ----------------------------------------------------------------------
-[debug] [2026-09-16T19:18:21.221Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\MIS_\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js deploy --only hosting --debug
-[debug] [2026-09-16T19:18:21.222Z] CLI Version:   15.30.1
-[debug] [2026-09-16T19:18:21.222Z] Platform:      win32
-[debug] [2026-09-16T19:18:21.222Z] Node Version:  v24.19.0
-[debug] [2026-09-16T19:18:21.222Z] Detected Agent: antigravity
-[debug] [2026-09-16T19:18:21.222Z] Time:          Thu Sep 17 2026 02:18:21 GMT+0700 (Indochina Time)
-[debug] [2026-09-16T19:18:21.222Z] ----------------------------------------------------------------------
-[debug] 
-[debug] [2026-09-16T19:18:22.427Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-09-16T19:18:22.427Z] > authorizing via signed-in user (jirapanjr95@gmail.com)
-[debug] [2026-09-16T19:18:22.427Z] [iam] checking project chemlab-45006 for permissions ["firebase.projects.get","firebasehosting.sites.update"]
-[debug] [2026-09-16T19:18:22.437Z] Checked if tokens are valid: true, expires at: 1789589381817
-[debug] [2026-09-16T19:18:22.437Z] Checked if tokens are valid: true, expires at: 1789589381817
-[debug] [2026-09-16T19:18:22.438Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/chemlab-45006:testIamPermissions [none]
-[debug] [2026-09-16T19:18:22.439Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/chemlab-45006:testIamPermissions  x-goog-user-project=chemlab-45006
-[debug] [2026-09-16T19:18:22.439Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/chemlab-45006:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
-[debug] [2026-09-16T19:18:23.853Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/chemlab-45006:testIamPermissions 200
-[debug] [2026-09-16T19:18:23.854Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/chemlab-45006:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
-[debug] [2026-09-16T19:18:23.854Z] Checked if tokens are valid: true, expires at: 1789589381817
-[debug] [2026-09-16T19:18:23.854Z] Checked if tokens are valid: true, expires at: 1789589381817
-[debug] [2026-09-16T19:18:23.854Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/chemlab-45006 [none]
-[debug] [2026-09-16T19:18:24.580Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/chemlab-45006 200
-[debug] [2026-09-16T19:18:24.580Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/chemlab-45006 {"projectId":"chemlab-45006","projectNumber":"239212958243","displayName":"Chemlab","name":"projects/chemlab-45006","resources":{"hostingSite":"chemlab-45006"},"state":"ACTIVE","labels":{"firebase":"enabled"},"etag":"1_996ccb91-5acd-4998-8149-d97d0302b4c4"}
-[debug] [2026-09-16T19:18:27.216Z] defaultcredentials: writing to file C:\Users\MIS_\AppData\Roaming\firebase\jirapanjr95_gmail_com_application_default_credentials.json
-[debug] [2026-09-16T19:18:27.217Z] Checked if tokens are valid: true, expires at: 1789589381817
-[debug] [2026-09-16T19:18:27.218Z] Checked if tokens are valid: true, expires at: 1789589381817
-[debug] [2026-09-16T19:18:27.218Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites pageToken=&pageSize=10
-[debug] [2026-09-16T19:18:28.396Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites 200
-[debug] [2026-09-16T19:18:28.396Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites {"sites":[{"name":"projects/chemlab-45006/sites/chemlab","defaultUrl":"https://chemlab.web.app","appId":"1:239212958243:web:1b9d97edc9b4903b8a1796","type":"USER_SITE"},{"name":"projects/chemlab-45006/sites/chemlab-45006","defaultUrl":"https://chemlab-45006.web.app","type":"DEFAULT_SITE"}]}
-[debug] [2026-09-16T19:18:28.397Z] Checked if tokens are valid: true, expires at: 1789589381817
-[debug] [2026-09-16T19:18:28.397Z] Checked if tokens are valid: true, expires at: 1789589381817
-[debug] [2026-09-16T19:18:28.397Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites 
-[debug] [2026-09-16T19:18:29.222Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites 200
-[debug] [2026-09-16T19:18:29.222Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites {"sites":[{"name":"projects/chemlab-45006/sites/chemlab","defaultUrl":"https://chemlab.web.app","appId":"1:239212958243:web:1b9d97edc9b4903b8a1796","type":"USER_SITE"},{"name":"projects/chemlab-45006/sites/chemlab-45006","defaultUrl":"https://chemlab-45006.web.app","type":"DEFAULT_SITE"}]}
-[debug] [2026-09-16T19:18:29.222Z] Checked if tokens are valid: true, expires at: 1789589381817
-[debug] [2026-09-16T19:18:29.222Z] Checked if tokens are valid: true, expires at: 1789589381817
-[debug] [2026-09-16T19:18:29.222Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/chemlab-45006/webApps/-/config [none]
-[debug] [2026-09-16T19:18:30.560Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/chemlab-45006/webApps/-/config 200
-[debug] [2026-09-16T19:18:30.561Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/chemlab-45006/webApps/-/config {"projectId":"chemlab-45006","appId":"1:239212958243:web:1b9d97edc9b4903b8a1796","storageBucket":"chemlab-45006.firebasestorage.app","apiKey":"AIzaSyA7dGWxO-_DWu_ntBcbfw6QIlLVAhY1UGA","authDomain":"chemlab-45006.firebaseapp.com","messagingSenderId":"239212958243","measurementId":"G-XYS90FWDCN","projectNumber":"239212958243","version":"2"}
-[info] 
-   Thank you for trying our early preview of Next.js support on Firebase Hosting.
-   During the preview, support is best-effort and breaking changes can be expected. Proceed with caution.
-   The integration is known to work with Next.js version 12 - 16.0. You may encounter errors.
-
-   Documentation: https://firebase.google.com/docs/hosting/frameworks/nextjs
-   File a bug: https://github.com/firebase/firebase-tools/issues/new?template=bug_report.md
-   Submit a feature request: https://github.com/firebase/firebase-tools/issues/new?template=feature_request.md
-
-   We'd love to learn from you. Express your interest in helping us shape the future of Firebase Hosting: https://goo.gle/41enW5X
-
-[debug] [2026-09-16T19:18:36.735Z] Checked if tokens are valid: true, expires at: 1789589381817
-[debug] [2026-09-16T19:18:36.735Z] Checked if tokens are valid: true, expires at: 1789589381817
-[debug] [2026-09-16T19:18:36.736Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites/chemlab-45006 [none]
-[debug] [2026-09-16T19:18:37.830Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites/chemlab-45006 200
-[debug] [2026-09-16T19:18:37.830Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites/chemlab-45006 {"name":"projects/chemlab-45006/sites/chemlab-45006","defaultUrl":"https://chemlab-45006.web.app","type":"DEFAULT_SITE"}
-[info] ▲ Next.js 16.2.6 (Turbopack)
-
-[info] - Environments: .env.local
-
-[info] 
-
-[info]   Creating an optimized production build ...
-
-[info] 
-
-[info] [0.28ms] [@tailwindcss/postcss] app\challenge.css
-[0.26ms]   ↳ Quick bail check
-
-
-[info] 
-
-[info] [0.09ms] [@tailwindcss/postcss] app\question-builder.css
-[0.08ms]   ↳ Quick bail check
-
-
-[info] 
-[0.09ms] [@tailwindcss/postcss] app\teacher-account.css
-[0.06ms]   ↳ Quick bail check
-
-[info] 
-
-[info] 
-[608.20ms] [@tailwindcss/postcss] app\globals.css
-
-[info] [  0.07ms]   ↳ Quick bail check
-[ 37.07ms]   ↳ Setup compiler
-[  1.41ms]     ↳ PostCSS AST -> Tailwind CSS AST
-[ 35.62ms]     ↳ Create compiler
-[  0.55ms]   ↳ Register full rebuild paths
-[  1.40ms]   ↳ Setup scanner
-[439.66ms]   ↳ Scan for candidates
-[ 23.53ms]   ↳ Register dependency messages
-[ 52.93ms]   ↳ Build utilities
-[ 47.52ms]   ↳ Optimization
-
-[info] [  1.60ms]     ↳ AST -> CSS
-[ 21.73ms]     ↳ Lightning CSS
-[ 24.16ms]     ↳ CSS -> PostCSS AST
-
-[info] [  5.07ms]   ↳ Update PostCSS AST
-
-
-[info] ✓ Compiled successfully in 3.9s
-
-[info]   Running TypeScript ...
-
-[info]   Finished TypeScript in 6.2s ...
-
-[info]   Collecting page data using 11 workers ...
-
-[info]   Generating static pages using 11 workers (0/12) ...
-
-[info]   Generating static pages using 11 workers (3/12) 
-
-[info]   Generating static pages using 11 workers (6/12) 
-
-[info]   Generating static pages using 11 workers (9/12) 
-
-[info] ✓ Generating static pages using 11 workers (12/12) in 310ms
-
-[info]   Finalizing page optimization ...
-
-[info] 
-
-[info] Route (app)
-┌ ○ /
-├ ○ /_not-found
-├ ƒ /api/attempt
-├ ƒ /api/rooms
-├ ƒ /api/rooms/[key]
-├ ƒ /api/teacher/profile
-├ ƒ /api/teacher/rooms
-├ ƒ /api/teacher/rooms/[id]
-├ ƒ /api/teacher/rooms/[id]/questions
-├ ○ /join
-├ ƒ /join/[code]
-├ ○ /student/avatar
-├ ○ /student/classroom
-├ ○ /student/lab
-├ ○ /student/results
-├ ƒ /teacher/classrooms/[id]
-├ ƒ /teacher/classrooms/[id]/questions
-├ ƒ /teacher/classrooms/[id]/report
-├ ○ /teacher/classrooms/new
-├ ○ /teacher/dashboard
-├ ○ /teacher/login
-└ ○ /teacher/profile
-
-
-[info] 
-○  (Static)   prerendered as static content
-ƒ  (Dynamic)  server-rendered on demand
-
-
-[info] Building a Cloud Function to run this application. This is needed due to:
-[info]  • non-static component /api/attempt/route
-[info]  • non-static component /api/rooms/[key]/route
-[info]  • non-static component /api/rooms/route
-[info]  • non-static component /api/teacher/profile/route
-[info]  • non-static component /api/teacher/rooms/[id]/questions/route
-[debug] [2026-09-16T19:18:54.273Z]  • non-static component /api/teacher/rooms/[id]/route
-[debug] [2026-09-16T19:18:54.273Z]  • non-static component /api/teacher/rooms/route
-[debug] [2026-09-16T19:18:54.273Z]  • non-static component /join/[code]/page
-[debug] [2026-09-16T19:18:54.273Z]  • non-static component /teacher/classrooms/[id]/page
-[debug] [2026-09-16T19:18:54.273Z]  • non-static component /teacher/classrooms/[id]/questions/page
-[debug] [2026-09-16T19:18:54.273Z]  • non-static component /teacher/classrooms/[id]/report/page
-[info] 
-[debug] [2026-09-16T19:18:59.460Z] Checked if tokens are valid: true, expires at: 1789589381817
-[debug] [2026-09-16T19:18:59.460Z] Checked if tokens are valid: true, expires at: 1789589381817
-[debug] [2026-09-16T19:18:59.460Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites/chemlab-45006 [none]
-[debug] [2026-09-16T19:19:00.711Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites/chemlab-45006 200
-[debug] [2026-09-16T19:19:00.711Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites/chemlab-45006 {"name":"projects/chemlab-45006/sites/chemlab-45006","defaultUrl":"https://chemlab-45006.web.app","type":"DEFAULT_SITE"}
-[debug] [2026-09-16T19:19:01.245Z] Error: EPERM: operation not permitted, symlink 'C:\Users\MIS_\OneDrive - University of Phayao\Desktop\เกม for สื่อการสอน\chemclass-lab\node_modules\firebase-admin' -> 'C:\Users\MIS_\OneDrive - University of Phayao\Desktop\เกม for สื่อการสอน\chemclass-lab\.firebase\chemlab-45006\functions\.next\node_modules\firebase-admin-a14c8a5423a75469'
+[debug] [2026-09-16T19:43:29.567Z] Checked if tokens are valid: true, expires at: 1789589381817
+[debug] [2026-09-16T19:43:29.567Z] Checked if tokens are valid: true, expires at: 1789589381817
+[debug] [2026-09-16T19:43:29.567Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites/chemlab-45006 [none]
+[debug] [2026-09-16T19:43:30.656Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites/chemlab-45006 200
+[debug] [2026-09-16T19:43:30.656Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/chemlab-45006/sites/chemlab-45006 {"name":"projects/chemlab-45006/sites/chemlab-45006","defaultUrl":"https://chemlab-45006.web.app","type":"DEFAULT_SITE"}
+[debug] [2026-09-16T19:43:31.627Z] Error: EPERM: operation not permitted, symlink 'C:\Users\MIS_\OneDrive - University of Phayao\Desktop\เกม for สื่อการสอน\chemclass-lab\node_modules\firebase-admin' -> 'C:\Users\MIS_\OneDrive - University of Phayao\Desktop\เกม for สื่อการสอน\chemclass-lab\.firebase\chemlab-45006\functions\.next\node_modules\firebase-admin-a14c8a5423a75469'
 [error] 
 [error] Error: An unexpected error has occurred.

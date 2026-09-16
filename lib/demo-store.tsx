@@ -20,7 +20,31 @@ type Session={roomId:string;studentId:string;token?:string};
 type Store={ready:boolean;rooms:Classroom[];profile:TeacherProfile|null;currentStudent?:Session;error:string;canManage(roomId:string):boolean;teacherToken(roomId:string):string|undefined;createRoom(input:{name:string;subject:string;count:number;layout:Classroom["layout"]}):Promise<Classroom>;deleteRoom(roomId:string):Promise<void>;join(code:string,nickname:string):Promise<{room:Classroom;student:Student}|null>;updateAvatar(avatar:Avatar):Promise<void>;selectDesk(deskId:string):Promise<{ok:boolean;message:string}>;toggleHand():Promise<void>;getHint(levelId:number):Promise<string>;setRoomStatus(roomId:string,status:Classroom["status"]):Promise<void>;configureActivity(roomId:string,activity:ActivityConfig):Promise<void>;setDeskLock(roomId:string,deskId:string,locked:boolean):Promise<void>;setAllLocks(roomId:string,locked:boolean):Promise<void>;moveStudent(roomId:string,studentId:string,deskId:string):Promise<void>;submitAttempt(levelId:number,steps:string[]):Promise<{correct:boolean;feedback:string;score:number;explanation:string}>;skipLevel(levelId:number):Promise<void>};
 const Context=createContext<Store|null>(null);
 class RequestFailure extends Error{constructor(message:string,readonly status:number){super(message)}}
-async function request<T>(path:string,method="GET",body?:unknown,signal?:AbortSignal):Promise<T>{const hdrs:Record<string,string>={"content-type":"application/json"};const user=auth.currentUser;if(user){try{const token=await user.getIdToken();hdrs["authorization"]=`Bearer ${token}`}catch{}}const response=await fetch(path,{method,headers:hdrs,body:body?JSON.stringify(body):undefined,cache:"no-store",signal});const data=await response.json() as {error?:string};if(!response.ok)throw new RequestFailure(data.error??"เชื่อมต่อห้องเรียนไม่ได้",response.status);return data as T}
+const TEACHER_ID_KEY="chemclass-teacher-id";
+export function getStoredTeacherId(): string {
+  if (typeof window === "undefined") return "";
+  let id = localStorage.getItem(TEACHER_ID_KEY);
+  if (!id) {
+    id = "teacher_" + crypto.randomUUID().replace(/-/g, "").slice(0, 16);
+    localStorage.setItem(TEACHER_ID_KEY, id);
+  }
+  return id;
+}
+
+async function request<T>(path:string,method="GET",body?:unknown,signal?:AbortSignal):Promise<T>{
+  const hdrs:Record<string,string>={"content-type":"application/json"};
+  if(typeof window!=="undefined"){
+    const tid=getStoredTeacherId();
+    if(tid){
+      hdrs["x-teacher-id"]=tid;
+      hdrs["authorization"]=`Bearer ${tid}`;
+    }
+  }
+  const response=await fetch(path,{method,headers:hdrs,body:body?JSON.stringify(body):undefined,cache:"no-store",signal});
+  const data=await response.json() as {error?:string};
+  if(!response.ok)throw new RequestFailure(data.error??"เชื่อมต่อห้องเรียนไม่ได้",response.status);
+  return data as T;
+}
 
 export function DemoProvider({children}:{children:React.ReactNode}){
   const pathname=usePathname();

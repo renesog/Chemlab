@@ -1,26 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "@/lib/firebase/config";
+import { useDemo } from "@/lib/demo-store";
 import { LoadingState } from "@/components/app-shell";
 
 export default function TeacherDashboardLayout({ children }: { children: React.ReactNode }) {
+  const store = useDemo();
   const router = useRouter();
-  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        router.replace("/teacher/login");
-      } else {
-        setReady(true);
-      }
-    });
-    return unsubscribe;
-  }, [router]);
+    if (store.ready && !store.profile) {
+      router.replace("/teacher/login");
+    }
+  }, [store.ready, store.profile, router]);
 
-  if (!ready) return <LoadingState />;
+  if (!store.ready) return <LoadingState />;
   return children;
 }

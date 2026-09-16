@@ -2,9 +2,12 @@
 
 import { ArrowRight, CheckCircle2, FlaskConical, GraduationCap, UsersRound } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useDemo } from "@/lib/demo-store";
 
 export default function Home() {
   const router = useRouter();
+  const store = useDemo();
+
   return (
     <main className="role-page">
       <header className="brand-bar">
@@ -18,18 +21,34 @@ export default function Home() {
           <p>เลือกบทบาทเพื่อเข้าสู่พื้นที่ที่เหมาะกับคุณ</p>
         </div>
         <div className="role-grid">
-          <button className="role-card teacher" onClick={() => router.push("/teacher/login")}>
+          <button 
+            className="role-card teacher" 
+            onClick={() => router.push(store.profile ? "/teacher/dashboard" : "/teacher/login")}
+          >
             <span className="role-icon"><GraduationCap size={34} /></span>
-            <span className="role-copy"><small>สำหรับผู้จัดกิจกรรม</small><strong>ฉันเป็นครู</strong><span>สร้างห้อง จัดโต๊ะ และติดตามการทดลอง</span><b>เข้าสู่ระบบครู <ArrowRight size={17}/></b></span>
+            <span className="role-copy">
+              <small>สำหรับผู้จัดกิจกรรม</small>
+              <strong>ฉันเป็นครู</strong>
+              <span>สร้างห้อง จัดโต๊ะ และติดตามการทดลอง</span>
+              <b>เข้าห้องเรียนครู <ArrowRight size={17}/></b>
+            </span>
             <ArrowRight className="role-arrow" aria-hidden="true" />
           </button>
           <button className="role-card student" onClick={() => router.push("/join")}>
             <span className="role-icon"><UsersRound size={34} /></span>
-            <span className="role-copy"><small>เข้าร่วมได้ทันที</small><strong>ฉันเป็นนักเรียน</strong><span>ใส่รหัสห้อง เลือกที่นั่ง และเริ่มทดลอง</span><b>ใส่รหัสห้อง <ArrowRight size={17}/></b></span>
+            <span className="role-copy">
+              <small>เข้าร่วมได้ทันที</small>
+              <strong>ฉันเป็นนักเรียน</strong>
+              <span>ใส่รหัสห้อง เลือกที่นั่ง และเริ่มทดลอง</span>
+              <b>ใส่รหัสห้อง <ArrowRight size={17}/></b>
+            </span>
             <ArrowRight className="role-arrow" aria-hidden="true" />
           </button>
         </div>
-        <div className="role-assurance"><span><CheckCircle2/>นักเรียนไม่ต้องสมัครบัญชี</span><span><CheckCircle2/>ใช้ได้ทั้งมือถือและคอมพิวเตอร์</span></div>
+        <div className="role-assurance">
+          <span><CheckCircle2/>ใช้งานได้ทันที ไม่ต้องสมัครบัญชี</span>
+          <span><CheckCircle2/>ใช้ได้ทั้งมือถือและคอมพิวเตอร์</span>
+        </div>
       </section>
     </main>
   );
