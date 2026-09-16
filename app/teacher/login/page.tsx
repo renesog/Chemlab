@@ -34,17 +34,23 @@ export default function TeacherLogin() {
       const cred = await fn(auth, email.trim(), password);
       setUser({ uid: cred.user.uid, email: cred.user.email ?? email.trim() });
     } catch (err: unknown) {
+      console.error("Firebase auth error:", err);
       const code = (err as { code?: string }).code ?? "";
-      if (code === "auth/email-already-in-use") {
-        setError("อีเมลนี้ถูกใช้งานแล้ว กรุณาเข้าสู่ระบบแทน");
+      const msg = (err as { message?: string }).message ?? "";
+      if (code === "auth/operation-not-allowed") {
+        setError("ยังไม่ได้เปิดใช้งาน Email/Password ใน Firebase Console (ไปที่ Firebase > Authentication > Sign-in method แล้วเปิด Enable Email/Password)");
+      } else if (code === "auth/unauthorized-domain") {
+        setError("โดเมนนี้ยังไม่ได้รับอนุญาต (ไปที่ Firebase > Authentication > Settings > Authorized domains แล้วเพิ่มโดเมนนี้)");
+      } else if (code === "auth/email-already-in-use") {
+        setError("อีเมลนี้ถูกใช้งานแล้ว กรุณากดแท็บ 'เข้าสู่ระบบ' แทน");
       } else if (code === "auth/invalid-credential" || code === "auth/wrong-password" || code === "auth/user-not-found") {
-        setError("อีเมลหรือรหัสผ่านไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง");
+        setError("อีเมลหรือรหัสผ่านไม่ถูกต้อง (หากยังไม่มีบัญชี ให้กดแท็บ 'สมัครสมาชิกใหม่' ก่อน)");
       } else if (code === "auth/weak-password") {
         setError("รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร");
       } else if (code === "auth/invalid-email") {
         setError("รูปแบบอีเมลไม่ถูกต้อง");
       } else {
-        setError("ไม่สามารถดำเนินการได้ กรุณาลองใหม่อีกครั้ง");
+        setError(`เกิดข้อผิดพลาด (${code || msg || "unknown"}) กรุณาลองใหม่อีกครั้ง`);
       }
     } finally {
       setLoading(false);
