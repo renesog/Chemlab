@@ -13,14 +13,14 @@ export function JoinForm({initialCode=""}:{initialCode?:string}){
   const [nickname,setNickname]=useState("");
   const [error,setError]=useState("");
 
-  function submit(e:FormEvent<HTMLFormElement>){
+  async function submit(e:FormEvent<HTMLFormElement>){
     e.preventDefault();
     const cleanCode=code.trim().toUpperCase();
     const cleanNickname=nickname.trim();
     if(!/^[A-Z0-9]{6}$/.test(cleanCode)){setError("รหัสห้องต้องมีตัวอักษรหรือตัวเลข 6 ตัว");return;}
     if(cleanNickname.length<2){setError("กรุณาใส่ชื่อเล่นอย่างน้อย 2 ตัวอักษร");return;}
-    const result=join(cleanCode,cleanNickname);
-    if(!result){setError("ไม่พบห้องนี้ หรือคุณครูปิดห้องแล้ว กรุณาตรวจรหัสอีกครั้ง");return;}
+    const result=await join(cleanCode,cleanNickname);
+    if(!result){setError("ไม่พบห้องนี้ หรือคุณครูปิดห้องแล้ว กรุณาให้ครูสร้างห้องใหม่แล้วสแกน QR อีกครั้ง");return;}
     router.push("/student/avatar");
   }
 
@@ -44,7 +44,7 @@ export function JoinForm({initialCode=""}:{initialCode?:string}){
         </label>
         {error&&<p className="error-box" role="alert">{error}</p>}
         <button className="primary-button cyan-button" disabled={code.length!==6||nickname.trim().length<2}>เข้าร่วมห้อง <ArrowRight size={19}/></button>
-        <p className="demo-hint">ทดลองได้ทันทีด้วยรหัส <button type="button" onClick={()=>setCode("CHEM82")}>CHEM82</button></p>
+        <p className="demo-hint">หากยังไม่มีรหัสห้อง ให้คุณครูสร้างห้องใหม่แล้วแชร์ QR</p>
       </form>
     </section>
   </main></AppShell>

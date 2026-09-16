@@ -6,20 +6,20 @@ import { LEVELS } from "@/lib/levels";
 import type { ActivityConfig } from "@/lib/types";
 import { Check, Copy, Download, Link2, QrCode, Share2, SlidersHorizontal } from "lucide-react";
 import QRCode from "qrcode";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 
 export function RoomQrDialog({open,onOpenChange,roomCode,joinUrl}:{open:boolean;onOpenChange:(open:boolean)=>void;roomCode:string;joinUrl:string}){
   const [image,setImage]=useState("");
   const [message,setMessage]=useState("");
-  useEffect(()=>{if(!open||!joinUrl)return;setMessage("");QRCode.toDataURL(joinUrl,{width:320,margin:2,errorCorrectionLevel:"M",color:{dark:"#0a2540",light:"#ffffff"}}).then(setImage).catch(()=>setMessage("สร้าง QR ไม่สำเร็จ กรุณาใช้ปุ่มคัดลอกลิงก์"));},[open,joinUrl]);
+  useEffect(()=>{if(!open||!joinUrl)return;let cancelled=false;QRCode.toDataURL(joinUrl,{width:320,margin:2,errorCorrectionLevel:"M",color:{dark:"#0a2540",light:"#ffffff"}}).then(data=>{if(!cancelled)setImage(data)}).catch(()=>{if(!cancelled)setMessage("สร้าง QR ไม่สำเร็จ กรุณาใช้ปุ่มคัดลอกลิงก์")});return()=>{cancelled=true}},[open,joinUrl]);
   async function copyLink(){await navigator.clipboard.writeText(joinUrl);setMessage("คัดลอกลิงก์เข้าห้องแล้ว");}
   async function share(){if(navigator.share){await navigator.share({title:`เข้าห้อง ChemClass Lab ${roomCode}`,text:`เข้าห้องเรียนด้วยรหัส ${roomCode}`,url:joinUrl});return;}await copyLink();}
-  return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent className="qr-dialog"><DialogHeader><div className="dialog-icon"><QrCode/></div><DialogTitle>ให้นักเรียนสแกนเพื่อเข้าห้อง</DialogTitle><DialogDescription>สแกนแล้วระบบจะใส่รหัสห้อง {roomCode} ให้อัตโนมัติ นักเรียนเพียงตั้งชื่อและสร้างตัวละคร</DialogDescription></DialogHeader><div className="qr-preview">{image?<img src={image} alt={`QR Code สำหรับเข้าห้อง ${roomCode}`}/>:<div className="qr-loading">กำลังสร้าง QR…</div>}<strong>{roomCode}</strong></div><div className="share-link"><Link2/><span>{joinUrl}</span><button onClick={copyLink} aria-label="คัดลอกลิงก์"><Copy/></button></div>{message&&<p className="success-box" role="status"><Check/> {message}</p>}<DialogFooter><button className="secondary-button" onClick={share}><Share2/>แชร์ลิงก์</button>{image&&<a className="primary-button" href={image} download={`chemclass-${roomCode}.png`}><Download/>บันทึก QR</a>}</DialogFooter></DialogContent></Dialog>;
+  return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent className="qr-dialog"><DialogHeader><div className="dialog-icon"><QrCode/></div><DialogTitle>ให้นักเรียนสแกนเพื่อเข้าห้อง</DialogTitle><DialogDescription>สแกนแล้วระบบจะใส่รหัสห้อง {roomCode} ให้อัตโนมัติ นักเรียนเพียงตั้งชื่อและสร้างตัวละคร</DialogDescription></DialogHeader><div className="qr-preview">{image?<Image unoptimized width={320} height={320} src={image} alt={`QR Code สำหรับเข้าห้อง ${roomCode}`}/>:<div className="qr-loading">กำลังสร้าง QR…</div>}<strong>{roomCode}</strong></div><div className="share-link"><Link2/><span>{joinUrl}</span><button onClick={copyLink} aria-label="คัดลอกลิงก์"><Copy/></button></div>{message&&<p className="success-box" role="status"><Check/> {message}</p>}<DialogFooter><button className="secondary-button" onClick={share}><Share2/>แชร์ลิงก์</button>{image&&<a className="primary-button" href={image} download={`chemclass-${roomCode}.png`}><Download/>บันทึก QR</a>}</DialogFooter></DialogContent></Dialog>;
 }
 
 export function ActivityConfigDialog({open,onOpenChange,value,onSave}:{open:boolean;onOpenChange:(open:boolean)=>void;value:ActivityConfig;onSave:(value:ActivityConfig)=>void}){
   const [draft,setDraft]=useState<ActivityConfig>(value);
-  useEffect(()=>{if(open)setDraft(value)},[open,value]);
   function chooseMode(mode:ActivityConfig["mode"]){setDraft(mode==="PRESET"?structuredClone(defaultActivity):{...draft,mode:"CUSTOM"});}
   function toggleLevel(id:number){setDraft(current=>{const active=current.levelIds.includes(id);const next=active?current.levelIds.filter(x=>x!==id):[...current.levelIds,id].sort((a,b)=>a-b);return {...current,mode:"CUSTOM",levelIds:next.length?next:current.levelIds};});}
   function save(){onSave({...draft,title:draft.title.trim()||"กิจกรรมการแยกสาร"});onOpenChange(false);}

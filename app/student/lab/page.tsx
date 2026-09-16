@@ -15,14 +15,14 @@ export default function Lab(){
   const levelIndex=Math.max(0,activeLevels.indexOf(student?.currentLevel??activeLevels[0]));
   const level=LEVELS.find(item=>item.id===activeLevels[levelIndex])??LEVELS[0];
   const [selected,setSelected]=useState<string[]>([]);
-  const [attempts,setAttempts]=useState(0);
   const [feedback,setFeedback]=useState<{ok:boolean;text:string}|null>(null);
   const [busy,setBusy]=useState(false);
   const maxPoints=room?.activity.pointsByLevel[level.id]??5;
-  const score=Math.max(1,maxPoints-attempts);
+  const score=Math.max(1,maxPoints-(student?.attemptsByLevel?.[level.id]??0));
   const available=useMemo(()=>level.equipment.filter(e=>!selected.includes(e.id)),[level,selected]);
 
   if(!room||!student)return <AppShell title="ห้องทดลอง"><main className="empty-state"><h1>กรุณาเข้าห้องก่อน</h1><button className="primary-button" onClick={()=>router.push("/join")}>ใส่รหัสห้อง</button></main></AppShell>;
+  if(room.status!=="RUNNING"||!student.deskId)return <AppShell title="ห้องทดลอง"><main className="empty-state"><h1>กำลังรอคุณครูเริ่มเกม</h1><button className="primary-button" onClick={()=>router.push("/student/classroom")}>กลับไปห้องเรียน</button></main></AppShell>;
 
   function moveStep(index:number,direction:-1|1){
     const target=index+direction;
@@ -35,19 +35,14 @@ export default function Lab(){
     if(!selected.length){setFeedback({ok:false,text:"เลือกขั้นตอนอย่างน้อย 1 ขั้นตอนก่อนส่งคำตอบ"});return;}
     setBusy(true);
     try{
-      const res=await fetch("/api/attempt",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({levelId:level.id,steps:selected,previousAttempts:attempts,maxPoints})});
-      const data=await res.json();
-      if(!res.ok)throw new Error(data.error);
+      const data=await store.submitAttempt(level.id,selected);
       setFeedback({ok:data.correct,text:data.feedback});
       if(data.correct){
         setTimeout(()=>{
-          store.recordAttempt(level.id,true,data.score);
           if(levelIndex===activeLevels.length-1)router.push("/student/results");
-          else{setSelected([]);setAttempts(0);setFeedback(null)}
+          else{setSelected([]);setFeedback(null)}
         },800);
       }else{
-        setAttempts(value=>value+1);
-        store.recordAttempt(level.id,false,data.score);
       }
     }catch(error){setFeedback({ok:false,text:error instanceof Error?error.message:"เชื่อมต่อไม่ได้ ลองอีกครั้ง"})}
     finally{setBusy(false)}

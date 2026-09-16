@@ -1,0 +1,56 @@
+import { database, findRoom, json, mutateRoom, parseRoom, rateAllowed } from "@/db/live-rooms";
+import type { ActivityConfig, Avatar, Classroom, Student } from "@/lib/types";
+import { feedbackFor, scoreForAttempts, validateSequence } from "@/lib/game";
+
+type Body={action:string;token?:string;nickname?:string;avatar?:Avatar;deskId?:string;studentId?:string;status?:Classroom["status"];activity?:ActivityConfig;locked?:boolean;levelId?:number;steps?:string[]};
+const defaultAvatar:Avatar={gender:"boy",skin:"medium",hair:"short",hairColor:"black",shirt:"cyan",hat:"none"};
+export async function GET(_:Request,{params}:{params:Promise<{key:string}>}){const{key}=await params;const row=await findRoom(key);return row?json({room:parseRoom(row)}):json({error:"ไม่พบห้องเรียน"},404)}
+export async function PATCH(request:Request,{params}:{params:Promise<{key:string}>}){
+  const{key}=await params;let body:Body;try{body=await request.json()}catch{return json({error:"ข้อมูลไม่ถูกต้อง"},400)}
+  const row=await findRoom(key);if(!row)return json({error:"ไม่พบห้องเรียน หรือห้องถูกปิดแล้ว"},404);
+  if(body.action==="join"){
+    const address=request.headers.get("cf-connecting-ip")??"local";if(!await rateAllowed(`join:${row.id}:${address}`,30))return json({error:"เข้าห้องถี่เกินไป กรุณารอสักครู่"},429);
+    const nickname=body.nickname?.trim();if(!nickname||nickname.length<2||nickname.length>24)return json({error:"ชื่อเล่นต้องมี 2–24 ตัวอักษร"},400);
+    const student:Student={id:crypto.randomUUID(),nickname,avatar:defaultAvatar,handRaised:false,currentLevel:parseRoom(row).activity.levelIds[0]??1,totalScore:0,wrongAttempts:0,completed:[]};
+    const token=crypto.randomUUID()+crypto.randomUUID();
+    const room=await mutateRoom(row.id,current=>{if(current.status==="ENDED")throw new Error("room_ended");return{...current,students:[...current.students,student]}});
+    await database().prepare("insert into live_student_sessions(token,room_id,student_id,created_at) values(?1,?2,?3,?4)").bind(token,row.id,student.id,Date.now()).run();
+    return json({room,student,token});
+  }
+  const teacher=body.token===row.teacher_token;
+  const session=!teacher&&body.token?await database().prepare("select student_id from live_student_sessions where token=?1 and room_id=?2").bind(body.token,row.id).first<{student_id:string}>():null;
+  if(!teacher&&!session)return json({error:"เซสชันหมดอายุ กรุณาสแกน QR อีกครั้ง"},401);
+  if(session&&(body.action==="hand"||body.action==="attempt")&&!await rateAllowed(`${body.action}:${row.id}:${session.student_id}`,body.action==="hand"?12:30))return json({error:"ทำรายการถี่เกินไป กรุณารอสักครู่"},429);
+  try{
+    if(body.action==="attempt"&&!teacher){
+      if(!session||!Number.isInteger(body.levelId)||!Array.isArray(body.steps)||body.steps.length>12||body.steps.some(step=>typeof step!=="string"||step.length>50))return json({error:"คำตอบไม่ถูกต้อง"},400);
+      let outcome={correct:false,feedback:"",score:1};
+      const room=await mutateRoom(row.id,current=>{
+        const student=current.students.find(s=>s.id===session.student_id);const levelId=body.levelId!;
+        if(current.status!=="RUNNING"||!student?.deskId||student.currentLevel!==levelId||!current.activity.levelIds.includes(levelId)||student.completed.includes(levelId))throw new Error("activity_unavailable");
+        const correct=validateSequence(levelId,body.steps!);const attempts=(student.attemptsByLevel?.[levelId]??0)+(correct?0:1);const score=scoreForAttempts(attempts,current.activity.pointsByLevel[levelId]??5);const index=current.activity.levelIds.indexOf(levelId);
+        outcome={correct,score,feedback:correct?"เยี่ยมมาก! ลำดับนี้แยกสารได้สำเร็จ":feedbackFor(levelId,body.steps!)};
+        return{...current,students:current.students.map(s=>s.id===student.id?{...s,wrongAttempts:s.wrongAttempts+(correct?0:1),attemptsByLevel:{...s.attemptsByLevel,[levelId]:attempts},totalScore:s.totalScore+(correct?score:0),completed:correct?[...s.completed,levelId]:s.completed,currentLevel:correct?current.activity.levelIds[index+1]??levelId:s.currentLevel}:s)};
+      });
+      return json({room,...outcome});
+    }
+    const room=await mutateRoom(row.id,current=>applyAction(current,body,teacher,session?.student_id));
+    return json({room});
+  }catch(error){const message=error instanceof Error?error.message:"update_failed";return json({error:message==="desk_unavailable"?"โต๊ะนี้ไม่ว่าง กรุณาเลือกโต๊ะอื่น":message==="desk_locked"?"ครูล็อกโต๊ะนี้แล้ว จึงยังย้ายไม่ได้":"อัปเดตห้องไม่สำเร็จ กรุณาลองอีกครั้ง"},409)}
+}
+
+function applyAction(room:Classroom,body:Body,teacher:boolean,studentId?:string){
+  if(teacher){
+    if(body.action==="status"&&body.status&&["OPEN","RUNNING","PAUSED","ENDED"].includes(body.status)&&room.status!=="ENDED")return{...room,status:body.status};
+    if(body.action==="activity"&&body.activity&&room.status==="OPEN"&&typeof body.activity.title==="string"&&body.activity.title.trim().length>=2&&body.activity.title.length<=60&&["PRESET","CUSTOM"].includes(body.activity.mode)&&Array.isArray(body.activity.levelIds)&&body.activity.levelIds.length>0&&body.activity.levelIds.length<=8&&new Set(body.activity.levelIds).size===body.activity.levelIds.length&&body.activity.levelIds.every(id=>Number.isInteger(id)&&id>=1&&id<=8&&Number.isInteger(body.activity!.pointsByLevel[id])&&body.activity!.pointsByLevel[id]>=1&&body.activity!.pointsByLevel[id]<=20))return{...room,activity:body.activity,students:room.students.map(s=>({...s,currentLevel:body.activity!.levelIds[0]}))};
+    if(body.action==="deskLock"&&body.deskId&&typeof body.locked==="boolean")return{...room,desks:room.desks.map(d=>d.id===body.deskId?{...d,locked:body.locked!}:d)};
+    if(body.action==="allLocks"&&typeof body.locked==="boolean")return{...room,desks:room.desks.map(d=>({...d,locked:body.locked!}))};
+    if(body.action==="moveStudent"&&body.studentId&&body.deskId){const student=room.students.find(s=>s.id===body.studentId);const target=room.desks.find(d=>d.id===body.deskId);if(!student||!target||target.occupantId&&target.occupantId!==student.id)throw new Error("desk_unavailable");return{...room,desks:room.desks.map(d=>d.id===target.id?{...d,occupantId:student.id}:d.occupantId===student.id?{...d,occupantId:undefined}:d),students:room.students.map(s=>s.id===student.id?{...s,deskId:target.id}:s)}}
+    throw new Error("invalid_teacher_action");
+  }
+  if(!studentId)throw new Error("unauthorized");
+  if(body.action==="avatar"&&body.avatar&&["boy","girl"].includes(body.avatar.gender)&&["none","cap","lab"].includes(body.avatar.hat))return{...room,students:room.students.map(s=>s.id===studentId?{...s,avatar:body.avatar!}:s)};
+  if(body.action==="hand")return{...room,students:room.students.map(s=>s.id===studentId?{...s,handRaised:!s.handRaised}:s)};
+  if(body.action==="desk"&&body.deskId){const student=room.students.find(s=>s.id===studentId);const current=room.desks.find(d=>d.occupantId===studentId);const target=room.desks.find(d=>d.id===body.deskId);if(!student||!target||target.locked||target.occupantId&&target.occupantId!==studentId)throw new Error("desk_unavailable");if(current?.locked)throw new Error("desk_locked");return{...room,desks:room.desks.map(d=>d.id===target.id?{...d,occupantId:studentId}:d.occupantId===studentId?{...d,occupantId:undefined}:d),students:room.students.map(s=>s.id===studentId?{...s,deskId:target.id}:s)}}
+  throw new Error("invalid_student_action");
+}
