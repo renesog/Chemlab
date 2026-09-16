@@ -1,23 +1,107 @@
-# ChemClass Lab — การตั้งค่า Production
+# ChemClass Lab — การตั้งค่า Production (Firebase + Vercel)
 
-เวอร์ชันที่รันได้โดยไม่ตั้งค่า environment คือ **โหมดทดลองในอุปกรณ์เดียว** ข้อมูลเก็บใน browser และมีป้าย “โหมดทดลอง” ชัดเจน เหมาะสำหรับตรวจ UX เท่านั้น ไม่ใช่ห้องเรียนจริงหลายเครื่อง
+## ขั้นตอนที่ 1: สร้าง Firebase Project
 
-## Supabase
+1. ไปที่ [console.firebase.google.com](https://console.firebase.google.com)
+2. กด **Create a project** → ตั้งชื่อ เช่น "chemclass-lab"
+3. เปิด **Authentication** → Sign-in method → เปิด **Email/Password**
+4. เปิด **Firestore Database** → Create database → เลือก region **asia-southeast1** (สิงคโปร์ ใกล้ไทยสุด) → เลือก **Start in production mode**
+5. ไปที่ **Project Settings** → General → เลื่อนลง → กด **Add app** → เลือก **Web** → ตั้งชื่อ → จะได้ Firebase config
 
-1. สร้าง Supabase project และรัน migration ใน `supabase/migrations` ด้วย Supabase CLI
-2. เปิด Email authentication สำหรับบัญชีครู และเปิด Realtime ให้ตาราง `desks`, `student_sessions`, `activities`, `level_progress`
-3. ตั้ง environment variables ตาม `.env.example` โดยเก็บ `SUPABASE_SERVICE_ROLE_KEY`, `STUDENT_SESSION_SECRET` และ `ROOM_CODE_PEPPER` เฉพาะ server
-4. API ฝั่ง server ต้อง hash room code/session token, ตรวจ teacher ownership ทุก mutation และเรียก `select_own_desk` สำหรับการเลือกหรือย้ายโต๊ะ
+## ขั้นตอนที่ 2: เก็บ Firebase Config
 
-## Environment
+จากขั้นตอนที่ 1 จะได้ค่าเหล่านี้ ให้ใส่ใน `.env.local`:
 
-- `NEXT_PUBLIC_APP_URL`: origin ที่ deploy แล้ว ใช้สร้าง QR join URL
-- `NEXT_PUBLIC_SUPABASE_URL`: URL ของ Supabase project
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`: anon key สำหรับ client
-- `SUPABASE_SERVICE_ROLE_KEY`: service role สำหรับ route handler เท่านั้น
-- `STUDENT_SESSION_SECRET`: secret แบบสุ่มอย่างน้อย 32 bytes
-- `ROOM_CODE_PEPPER`: secret สำหรับ hash รหัสห้อง
+```env
+NEXT_PUBLIC_FIREBASE_API_KEY=AIza...
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=chemclass-lab.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=chemclass-lab
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=chemclass-lab.appspot.com
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123456789
+NEXT_PUBLIC_FIREBASE_APP_ID=1:123456789:web:abc123
+```
 
-## Deployment
+## ขั้นตอนที่ 3: สร้าง Service Account Key
 
-ใช้ Node.js 22 ขึ้นไป ติดตั้งด้วย `npm ci`, ทดสอบด้วย `npm test`, และ build ด้วย `npm run build` ก่อน deploy บน Vercel ตั้ง environment แยก Preview/Production และตั้ง `NEXT_PUBLIC_APP_URL` ให้ตรง origin จริง
+1. ไปที่ **Project Settings** → **Service Accounts**
+2. กด **Generate New Private Key** → Download ไฟล์ JSON
+3. เปิดไฟล์ JSON → copy เนื้อหาทั้งหมด → ใส่ใน `.env.local`:
+
+```env
+FIREBASE_SERVICE_ACCOUNT_KEY={"type":"service_account","project_id":"chemclass-lab",...}
+```
+
+⚠️ **อย่า commit ไฟล์นี้** เก็บเป็นความลับเสมอ
+
+## ขั้นตอนที่ 4: ตั้ง Firestore Security Rules
+
+ไปที่ Firestore → Rules → วาง rules นี้:
+
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /rooms/{roomId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && request.auth.uid == resource.data.ownerUserId;
+      allow delete: if request.auth != null && request.auth.uid == resource.data.ownerUserId;
+      match /studentTokens/{tokenId} {
+        allow read, write: if false;
+      }
+      match /answerKeys/{keyId} {
+        allow read, write: if false;
+      }
+    }
+    match /teacherProfiles/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if request.auth != null && request.auth.uid == uid;
+    }
+    match /rateLimits/{key} {
+      allow read, write: if false;
+    }
+  }
+}
+```
+
+## ขั้นตอนที่ 5: ตั้ง App Secrets
+
+สร้าง random secrets สำหรับ `.env.local`:
+
+```env
+STUDENT_SESSION_SECRET=<สุ่มตัวอักษร 32 ตัว>
+ROOM_CODE_PEPPER=<สุ่มตัวอักษร 32 ตัว>
+NEXT_PUBLIC_APP_URL=http://localhost:5173
+```
+
+## ขั้นตอนที่ 6: รันในเครื่อง
+
+```bash
+npm install
+npm run dev
+```
+
+เปิด http://localhost:5173
+
+## ขั้นตอนที่ 7: Deploy บน Vercel
+
+1. Push โค้ดขึ้น GitHub
+2. ไปที่ [vercel.com](https://vercel.com) → Import project จาก GitHub
+3. ตั้ง **Environment Variables** ทั้งหมดจาก `.env.local` (ยกเว้นเปลี่ยน `NEXT_PUBLIC_APP_URL` เป็น URL จริงของ Vercel)
+4. กด **Deploy**
+5. หลัง deploy สำเร็จ → อัปเดต `NEXT_PUBLIC_APP_URL` เป็น URL ที่ได้ เช่น `https://chemclass-lab.vercel.app`
+
+## Environment Variables ทั้งหมด
+
+| ชื่อ | ต้อง Public? | คำอธิบาย |
+|------|-------------|----------|
+| `NEXT_PUBLIC_FIREBASE_API_KEY` | ✅ | Firebase API key |
+| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | ✅ | Firebase auth domain |
+| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | ✅ | Firebase project ID |
+| `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | ✅ | Firebase storage |
+| `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | ✅ | Firebase messaging sender |
+| `NEXT_PUBLIC_FIREBASE_APP_ID` | ✅ | Firebase app ID |
+| `NEXT_PUBLIC_APP_URL` | ✅ | URL ที่ deploy เช่น `https://chemclass-lab.vercel.app` |
+| `FIREBASE_SERVICE_ACCOUNT_KEY` | ❌ | Service account JSON (เก็บ server เท่านั้น!) |
+| `STUDENT_SESSION_SECRET` | ❌ | Random secret อย่างน้อย 32 ตัว |
+| `ROOM_CODE_PEPPER` | ❌ | Random secret สำหรับ hash รหัสห้อง |

@@ -1,10 +1,26 @@
-import { requireChatGPTUser } from "@/app/chatgpt-auth";
-import { findTeacherProfile } from "@/db/teacher-profiles";
-import { redirect } from "next/navigation";
+"use client";
 
-export const dynamic="force-dynamic";
-export default async function TeacherDashboardLayout({children}:{children:React.ReactNode}){
-  const user=await requireChatGPTUser("/teacher/dashboard");
-  if(!await findTeacherProfile(user.userId))redirect("/teacher/login");
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "@/lib/firebase/config";
+import { LoadingState } from "@/components/app-shell";
+
+export default function TeacherDashboardLayout({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        router.replace("/teacher/login");
+      } else {
+        setReady(true);
+      }
+    });
+    return unsubscribe;
+  }, [router]);
+
+  if (!ready) return <LoadingState />;
   return children;
 }

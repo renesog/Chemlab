@@ -1,5 +1,7 @@
 import type { Classroom, Student } from "./types";
 
+export function finishedLevels(student:Student,levelIds:number[]){return levelIds.every(id=>student.completed.includes(id)||student.skipped?.includes(id))}
+
 export function countdownSeconds(room:Pick<Classroom,"status"|"gameStartsAt">,now:number){
   if(room.status!=="RUNNING"||!room.gameStartsAt)return 0;
   return Math.max(0,Math.min(3,Math.ceil((room.gameStartsAt-now)/1000)));

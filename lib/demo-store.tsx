@@ -4,6 +4,9 @@ import { createContext, useCallback, useContext, useEffect, useState } from "rea
 import { usePathname } from "next/navigation";
 import type { ActivityConfig, Avatar, Classroom, Student, TeacherProfile } from "./types";
 import { WebMcpTools } from "./webmcp";
+import { auth, clientDb } from "./firebase/config";
+import { onAuthStateChanged } from "firebase/auth";
+import { doc, onSnapshot } from "firebase/firestore";
 
 const KEY="chemclass-demo-v1";
 const SESSION="chemclass-student-session";
@@ -14,10 +17,10 @@ function desks(count=12){return Array.from({length:count},(_,i)=>({id:`desk-${i+
 const seed:Classroom[]=[];
 function normalizeRooms(value:Classroom[]){return value.map(room=>({...room,activity:room.activity??defaultActivity,students:room.students.map(student=>({...student,avatar:{...defaultAvatar,...student.avatar}}))}))}
 type Session={roomId:string;studentId:string;token?:string};
-type Store={ready:boolean;rooms:Classroom[];profile:TeacherProfile|null;currentStudent?:Session;error:string;canManage(roomId:string):boolean;teacherToken(roomId:string):string|undefined;createRoom(input:{name:string;subject:string;count:number;layout:Classroom["layout"]}):Promise<Classroom>;deleteRoom(roomId:string):Promise<void>;join(code:string,nickname:string):Promise<{room:Classroom;student:Student}|null>;updateAvatar(avatar:Avatar):Promise<void>;selectDesk(deskId:string):Promise<{ok:boolean;message:string}>;toggleHand():Promise<void>;getHint(levelId:number):Promise<string>;setRoomStatus(roomId:string,status:Classroom["status"]):Promise<void>;configureActivity(roomId:string,activity:ActivityConfig):Promise<void>;setDeskLock(roomId:string,deskId:string,locked:boolean):Promise<void>;setAllLocks(roomId:string,locked:boolean):Promise<void>;moveStudent(roomId:string,studentId:string,deskId:string):Promise<void>;submitAttempt(levelId:number,steps:string[]):Promise<{correct:boolean;feedback:string;score:number;explanation:string}>};
+type Store={ready:boolean;rooms:Classroom[];profile:TeacherProfile|null;currentStudent?:Session;error:string;canManage(roomId:string):boolean;teacherToken(roomId:string):string|undefined;createRoom(input:{name:string;subject:string;count:number;layout:Classroom["layout"]}):Promise<Classroom>;deleteRoom(roomId:string):Promise<void>;join(code:string,nickname:string):Promise<{room:Classroom;student:Student}|null>;updateAvatar(avatar:Avatar):Promise<void>;selectDesk(deskId:string):Promise<{ok:boolean;message:string}>;toggleHand():Promise<void>;getHint(levelId:number):Promise<string>;setRoomStatus(roomId:string,status:Classroom["status"]):Promise<void>;configureActivity(roomId:string,activity:ActivityConfig):Promise<void>;setDeskLock(roomId:string,deskId:string,locked:boolean):Promise<void>;setAllLocks(roomId:string,locked:boolean):Promise<void>;moveStudent(roomId:string,studentId:string,deskId:string):Promise<void>;submitAttempt(levelId:number,steps:string[]):Promise<{correct:boolean;feedback:string;score:number;explanation:string}>;skipLevel(levelId:number):Promise<void>};
 const Context=createContext<Store|null>(null);
 class RequestFailure extends Error{constructor(message:string,readonly status:number){super(message)}}
-async function request<T>(path:string,method="GET",body?:unknown,signal?:AbortSignal):Promise<T>{const response=await fetch(path,{method,headers:{"content-type":"application/json"},body:body?JSON.stringify(body):undefined,cache:"no-store",signal});const data=await response.json() as {error?:string};if(!response.ok)throw new RequestFailure(data.error??"เชื่อมต่อห้องเรียนไม่ได้",response.status);return data as T}
+async function request<T>(path:string,method="GET",body?:unknown,signal?:AbortSignal):Promise<T>{const hdrs:Record<string,string>={"content-type":"application/json"};const user=auth.currentUser;if(user){try{const token=await user.getIdToken();hdrs["authorization"]=`Bearer ${token}`}catch{}}const response=await fetch(path,{method,headers:hdrs,body:body?JSON.stringify(body):undefined,cache:"no-store",signal});const data=await response.json() as {error?:string};if(!response.ok)throw new RequestFailure(data.error??"เชื่อมต่อห้องเรียนไม่ได้",response.status);return data as T}
 
 export function DemoProvider({children}:{children:React.ReactNode}){
   const pathname=usePathname();
@@ -54,13 +57,34 @@ export function DemoProvider({children}:{children:React.ReactNode}){
   useEffect(()=>{
     if(!ready||!pathname?.startsWith("/teacher/")||pathname==="/teacher/login")return;
     let cancelled=false;
-    void Promise.all([request<{profile:TeacherProfile|null}>("/api/teacher/profile"),request<{rooms:Classroom[]}>("/api/teacher/rooms")]).then(([account,owned])=>{if(cancelled)return;setProfile(account.profile);setOwnedRoomIds(owned.rooms.map(room=>room.id));owned.rooms.forEach(putRoom)}).catch(()=>{});
-    return()=>{cancelled=true};
+    const fetchTeacherData=()=>{
+      void Promise.all([request<{profile:TeacherProfile|null}>("/api/teacher/profile"),request<{rooms:Classroom[]}>("/api/teacher/rooms")]).then(([account,owned])=>{if(cancelled)return;setProfile(account.profile);setOwnedRoomIds(owned.rooms.map(room=>room.id));owned.rooms.forEach(putRoom)}).catch(()=>{});
+    };
+    fetchTeacherData();
+    const unsubAuth=onAuthStateChanged(auth,(user)=>{if(user)fetchTeacherData();});
+    return()=>{cancelled=true;unsubAuth()};
   },[ready,pathname,putRoom]);
   const roomIds=rooms.map(r=>r.id).sort().join(",");
   const activeTeacherRoom=pathname?.match(/^\/teacher\/classrooms\/([^/]+)/)?.[1];
   const isDashboard=pathname==="/teacher/dashboard";
   const watchKey=isDashboard?roomIds:activeTeacherRoom&&activeTeacherRoom!=="new"?activeTeacherRoom:pathname?.startsWith("/student/")?currentStudent?.roomId??"":"";
+  const activeSingleRoomId=activeTeacherRoom&&activeTeacherRoom!=="new"?activeTeacherRoom:pathname?.startsWith("/student/")?currentStudent?.roomId:undefined;
+
+  useEffect(()=>{
+    if(!ready||!activeSingleRoomId)return;
+    try{
+      const roomRef=doc(clientDb,"rooms",activeSingleRoomId);
+      const unsubSnap=onSnapshot(roomRef,snap=>{
+        if(snap.exists()){
+          const data=snap.data();
+          if(data?.snapshot){
+            try{putRoom(JSON.parse(data.snapshot) as Classroom)}catch{}
+          }
+        }
+      },()=>{});
+      return unsubSnap;
+    }catch{}
+  },[ready,activeSingleRoomId,putRoom]);
   useEffect(()=>{
     if(!ready||!watchKey)return;
     let cancelled=false;
@@ -83,7 +107,10 @@ export function DemoProvider({children}:{children:React.ReactNode}){
   const createRoom:Store["createRoom"]=async input=>{const room:Classroom={id:crypto.randomUUID(),code:Array.from(crypto.getRandomValues(new Uint8Array(6)),n=>"ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[n%32]).join(""),name:input.name,subject:input.subject,layout:input.layout,status:"OPEN",catalogVersion:2,desks:desks(input.count),students:[],activity:defaultActivity,createdAt:new Date().toISOString()};try{const data=await request<{room:Classroom;teacherToken:string}>("/api/rooms","POST",{room});putRoom(data.room);setOwnedRoomIds(old=>old.includes(room.id)?old:[...old,room.id]);setTokens(old=>({...old,[room.id]:data.teacherToken}));return data.room}catch(e){setError(e instanceof Error?e.message:"สร้างห้องไม่สำเร็จ");throw e}};
   const deleteRoom:Store["deleteRoom"]=async roomId=>{
     if(!tokens[roomId]&&!ownedRoomIds.includes(roomId))throw new Error("คุณไม่มีสิทธิ์ลบห้องนี้");
-    const response=await fetch(`/api/teacher/rooms/${encodeURIComponent(roomId)}`,{method:"DELETE",headers:tokens[roomId]?{"x-teacher-token":tokens[roomId]}:{},cache:"no-store"});
+    const hdrs:Record<string,string>={};
+    const user=auth.currentUser;if(user){try{const token=await user.getIdToken();hdrs["authorization"]=`Bearer ${token}`}catch{}}
+    if(tokens[roomId])hdrs["x-teacher-token"]=tokens[roomId];
+    const response=await fetch(`/api/teacher/rooms/${encodeURIComponent(roomId)}`,{method:"DELETE",headers:hdrs,cache:"no-store"});
     const data=await response.json() as {error?:string};
     if(!response.ok)throw new Error(data.error??"ลบห้องไม่สำเร็จ กรุณาลองอีกครั้ง");
     setRooms(current=>current.filter(room=>room.id!==roomId));
@@ -104,7 +131,8 @@ export function DemoProvider({children}:{children:React.ReactNode}){
   const setAllLocks=(roomId:string,locked:boolean)=>teacherAction(roomId,"allLocks",{locked});
   const moveStudent=(roomId:string,studentId:string,deskId:string)=>teacherAction(roomId,"moveStudent",{studentId,deskId});
   const submitAttempt:Store["submitAttempt"]=async(levelId,steps)=>{if(!currentStudent?.token)throw new Error("กรุณาสแกน QR เข้าห้องอีกครั้ง");const data=await request<{room:Classroom;correct:boolean;feedback:string;score:number;explanation:string}>(`/api/rooms/${currentStudent.roomId}`,"PATCH",{action:"attempt",token:currentStudent.token,levelId,steps});putRoom(data.room);return data};
-  const value={ready,rooms,profile,currentStudent,error,canManage:(roomId:string)=>!!tokens[roomId]||ownedRoomIds.includes(roomId),teacherToken:(roomId:string)=>tokens[roomId],createRoom,deleteRoom,join,updateAvatar,selectDesk,toggleHand,getHint,setRoomStatus,configureActivity,setDeskLock,setAllLocks,moveStudent,submitAttempt};
+  const skipLevel:Store["skipLevel"]=async levelId=>{if(!currentStudent?.token)throw new Error("กรุณาสแกน QR เข้าห้องอีกครั้ง");const data=await request<{room:Classroom}>(`/api/rooms/${currentStudent.roomId}`,"PATCH",{action:"skip",token:currentStudent.token,levelId});putRoom(data.room)};
+  const value={ready,rooms,profile,currentStudent,error,canManage:(roomId:string)=>!!tokens[roomId]||ownedRoomIds.includes(roomId),teacherToken:(roomId:string)=>tokens[roomId],createRoom,deleteRoom,join,updateAvatar,selectDesk,toggleHand,getHint,setRoomStatus,configureActivity,setDeskLock,setAllLocks,moveStudent,submitAttempt,skipLevel};
   return <Context.Provider value={value}><WebMcpTools/>{children}</Context.Provider>;
 }
 export function useDemo(){const value=useContext(Context);if(!value)throw new Error("DemoProvider missing");return value}

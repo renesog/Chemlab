@@ -1,18 +1,89 @@
-import { env } from "cloudflare:workers";
-import type { Classroom } from "@/lib/types";
+import { adminDb } from '@/lib/firebase/admin';
+import { FieldValue } from 'firebase-admin/firestore';
+import type { Classroom } from '@/lib/types';
 
-type RoomRow={id:string;code:string;snapshot:string;teacher_token:string;owner_user_id:string|null;version:number};
-export function database(){if(!env.DB)throw new Error("D1 binding DB is unavailable");return env.DB;}
-export async function findRoom(key:string){return database().prepare("select id,code,snapshot,teacher_token,owner_user_id,version from live_rooms where id=?1 or code=?2 limit 1").bind(key,key.toUpperCase()).first<RoomRow>();}
-export function parseRoom(row:RoomRow){return JSON.parse(row.snapshot) as Classroom;}
-export async function mutateRoom(key:string,mutate:(room:Classroom,row:RoomRow)=>Promise<Classroom>|Classroom){
-  for(let attempt=0;attempt<4;attempt++){
-    const row=await findRoom(key);if(!row)return null;
-    const room=await mutate(parseRoom(row),row);
-    const result=await database().prepare("update live_rooms set snapshot=?1,version=version+1,updated_at=?2 where id=?3 and version=?4").bind(JSON.stringify(room),Date.now(),row.id,row.version).run();
-    if(result.meta.changes===1)return room;
+const roomsCol = () => adminDb.collection('rooms');
+const rateLimitsCol = () => adminDb.collection('rateLimits');
+
+type RoomDoc = {
+  id: string;
+  code: string;
+  snapshot: string;
+  teacherToken: string;
+  ownerUserId: string | null;
+  version: number;
+  updatedAt: number;
+};
+
+export async function findRoom(key: string): Promise<(RoomDoc & { _ref: FirebaseFirestore.DocumentReference }) | null> {
+  // Try by ID first
+  const byId = await roomsCol().doc(key).get();
+  if (byId.exists) {
+    const data = byId.data() as RoomDoc;
+    return { ...data, _ref: byId.ref };
   }
-  throw new Error("room_update_conflict");
+
+  // Try by code
+  const byCode = await roomsCol().where('code', '==', key.toUpperCase()).limit(1).get();
+  if (!byCode.empty) {
+    const doc = byCode.docs[0];
+    const data = doc.data() as RoomDoc;
+    return { ...data, _ref: doc.ref };
+  }
+
+  return null;
 }
-export function json(data:unknown,status=200){return Response.json(data,{status,headers:{"cache-control":"no-store"}})}
-export async function rateAllowed(key:string,limit:number){const now=Date.now();await database().prepare("insert into live_rate_limits(key,count,reset_at) values(?1,1,?2) on conflict(key) do update set count=case when reset_at<=?3 then 1 else count+1 end,reset_at=case when reset_at<=?3 then ?2 else reset_at end").bind(key,now+60_000,now).run();const state=await database().prepare("select count from live_rate_limits where key=?1").bind(key).first<{count:number}>();return(state?.count??0)<=limit}
+
+export function parseRoom(row: RoomDoc): Classroom {
+  return JSON.parse(row.snapshot) as Classroom;
+}
+
+export async function mutateRoom(
+  key: string,
+  mutate: (room: Classroom, row: RoomDoc) => Promise<Classroom> | Classroom,
+): Promise<Classroom | null> {
+  const found = await findRoom(key);
+  if (!found) return null;
+
+  const result = await adminDb.runTransaction(async (tx) => {
+    const freshSnap = await tx.get(found._ref);
+    if (!freshSnap.exists) throw new Error('room_not_found');
+    const row = freshSnap.data() as RoomDoc;
+    const room = await mutate(parseRoom(row), row);
+    tx.update(found._ref, {
+      snapshot: JSON.stringify(room),
+      version: FieldValue.increment(1),
+      updatedAt: Date.now(),
+    });
+    return room;
+  });
+
+  return result;
+}
+
+export function json(data: unknown, status = 200) {
+  return Response.json(data, { status, headers: { 'cache-control': 'no-store' } });
+}
+
+export async function rateAllowed(key: string, limit: number): Promise<boolean> {
+  const now = Date.now();
+  const ref = rateLimitsCol().doc(key.replace(/\//g, '_'));
+
+  const result = await adminDb.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists || (snap.data()?.resetAt ?? 0) <= now) {
+      tx.set(ref, { count: 1, resetAt: now + 60_000 });
+      return 1;
+    }
+    const current = snap.data()!;
+    const newCount = (current.count ?? 0) + 1;
+    tx.update(ref, { count: newCount });
+    return newCount;
+  });
+
+  return result <= limit;
+}
+
+export function database() {
+  return adminDb;
+}

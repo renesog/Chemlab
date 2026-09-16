@@ -1,15 +1,27 @@
-import { database } from "./live-rooms";
-import type { TeacherProfile } from "@/lib/types";
+import { adminDb } from '@/lib/firebase/admin';
+import type { TeacherProfile } from '@/lib/types';
 
-type ProfileRow={nickname:string;avatar:string;color:string};
-export async function findTeacherProfile(userId:string):Promise<TeacherProfile|null>{
-  const row=await database().prepare("select nickname,avatar,color from teacher_profiles where user_id=?1").bind(userId).first<ProfileRow>();
-  if(!row)return null;
-  return {nickname:row.nickname,avatar:row.avatar as TeacherProfile["avatar"],color:row.color as TeacherProfile["color"]};
+const profilesCol = () => adminDb.collection('teacherProfiles');
+
+export async function findTeacherProfile(userId: string): Promise<TeacherProfile | null> {
+  const doc = await profilesCol().doc(userId).get();
+  if (!doc.exists) return null;
+  const data = doc.data()!;
+  return {
+    nickname: data.nickname,
+    avatar: data.avatar as TeacherProfile['avatar'],
+    color: data.color as TeacherProfile['color'],
+  };
 }
 
-export function validTeacherProfile(value:unknown):value is TeacherProfile{
-  if(!value||typeof value!=="object")return false;
-  const profile=value as Record<string,unknown>;
-  return typeof profile.nickname==="string"&&profile.nickname.trim().length>=2&&profile.nickname.trim().length<=32&&["flask","atom","book"].includes(String(profile.avatar))&&["cyan","navy","gold"].includes(String(profile.color));
+export function validTeacherProfile(value: unknown): value is TeacherProfile {
+  if (!value || typeof value !== 'object') return false;
+  const profile = value as Record<string, unknown>;
+  return (
+    typeof profile.nickname === 'string' &&
+    profile.nickname.trim().length >= 2 &&
+    profile.nickname.trim().length <= 32 &&
+    ['flask', 'atom', 'book'].includes(String(profile.avatar)) &&
+    ['cyan', 'navy', 'gold'].includes(String(profile.color))
+  );
 }

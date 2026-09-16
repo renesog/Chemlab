@@ -1,7 +1,9 @@
-import { database } from "./live-rooms";
-import type { PrivateQuestionKeys } from "@/lib/custom-questions";
+import { adminDb } from '@/lib/firebase/admin';
+import type { PrivateQuestionKeys } from '@/lib/custom-questions';
 
-export async function findQuestionKeys(roomId:string):Promise<PrivateQuestionKeys>{
-  const row=await database().prepare("select answers_json from live_room_answer_keys where room_id=?1").bind(roomId).first<{answers_json:string}>();
-  return row?JSON.parse(row.answers_json) as PrivateQuestionKeys:{};
+export async function findQuestionKeys(roomId: string): Promise<PrivateQuestionKeys> {
+  const doc = await adminDb.collection('rooms').doc(roomId).collection('answerKeys').doc(roomId).get();
+  if (!doc.exists) return {};
+  const data = doc.data()!;
+  return (data.answersJson ? JSON.parse(data.answersJson) : {}) as PrivateQuestionKeys;
 }
