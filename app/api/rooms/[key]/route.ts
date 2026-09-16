@@ -1,6 +1,6 @@
 import { database, findRoom, json, mutateRoom, parseRoom, rateAllowed } from "@/db/live-rooms";
 import type { ActivityConfig, Avatar, Classroom, Student } from "@/lib/types";
-import { feedbackFor, scoreForAttempts, validateSequence } from "@/lib/game";
+import { explanationFor, feedbackFor, scoreForAttempts, validateSequence } from "@/lib/game";
 
 type Body={action:string;token?:string;nickname?:string;avatar?:Avatar;deskId?:string;studentId?:string;status?:Classroom["status"];activity?:ActivityConfig;locked?:boolean;levelId?:number;steps?:string[]};
 const defaultAvatar:Avatar={gender:"boy",skin:"medium",hair:"short",hairColor:"black",shirt:"cyan",hat:"none"};
@@ -24,12 +24,12 @@ export async function PATCH(request:Request,{params}:{params:Promise<{key:string
   try{
     if(body.action==="attempt"&&!teacher){
       if(!session||!Number.isInteger(body.levelId)||!Array.isArray(body.steps)||body.steps.length>12||body.steps.some(step=>typeof step!=="string"||step.length>50))return json({error:"คำตอบไม่ถูกต้อง"},400);
-      let outcome={correct:false,feedback:"",score:1};
+      let outcome={correct:false,feedback:"",score:1,explanation:""};
       const room=await mutateRoom(row.id,current=>{
         const student=current.students.find(s=>s.id===session.student_id);const levelId=body.levelId!;
         if(current.status!=="RUNNING"||Date.now()<(current.gameStartsAt??0)||!student?.deskId||student.currentLevel!==levelId||!current.activity.levelIds.includes(levelId)||student.completed.includes(levelId))throw new Error("activity_unavailable");
         const correct=validateSequence(levelId,body.steps!,current.catalogVersion===2?2:1);const attempts=(student.attemptsByLevel?.[levelId]??0)+(correct?0:1);const score=scoreForAttempts(attempts,current.activity.pointsByLevel[levelId]??5);const index=current.activity.levelIds.indexOf(levelId);
-        outcome={correct,score,feedback:correct?`แยกสารสำเร็จ ได้ ${score} คะแนนในด่านนี้`:`หัก 1 คะแนน เหลือ ${score} คะแนนในด่านนี้ — ${feedbackFor(levelId,body.steps!)}`};
+        outcome={correct,score,feedback:correct?`แยกสารสำเร็จ ได้ ${score} คะแนนในด่านนี้`:`หัก 1 คะแนน เหลือ ${score} คะแนนในด่านนี้ — ${feedbackFor(levelId,body.steps!)}`,explanation:correct?explanationFor(levelId,current.catalogVersion===2?2:1):""};
         return{...current,students:current.students.map(s=>s.id===student.id?{...s,wrongAttempts:s.wrongAttempts+(correct?0:1),attemptsByLevel:{...s.attemptsByLevel,[levelId]:attempts},totalScore:s.totalScore+(correct?score:0),completed:correct?[...s.completed,levelId]:s.completed,currentLevel:correct?current.activity.levelIds[index+1]??levelId:s.currentLevel}:s)};
       });
       return json({room,...outcome});

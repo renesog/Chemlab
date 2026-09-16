@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./challenge.css";
 import { DemoProvider } from "@/lib/demo-store";
 
 export const metadata: Metadata = {
