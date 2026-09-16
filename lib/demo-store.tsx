@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import type { ActivityConfig, Avatar, Classroom, Student } from "./types";
 import { WebMcpTools } from "./webmcp";
 
@@ -15,9 +16,10 @@ function normalizeRooms(value:Classroom[]){return value.map(room=>({...room,acti
 type Session={roomId:string;studentId:string;token?:string};
 type Store={ready:boolean;rooms:Classroom[];currentStudent?:Session;error:string;canManage(roomId:string):boolean;createRoom(input:{name:string;subject:string;count:number;layout:Classroom["layout"]}):Promise<Classroom>;join(code:string,nickname:string):Promise<{room:Classroom;student:Student}|null>;updateAvatar(avatar:Avatar):Promise<void>;selectDesk(deskId:string):Promise<{ok:boolean;message:string}>;toggleHand():Promise<void>;setRoomStatus(roomId:string,status:Classroom["status"]):Promise<void>;configureActivity(roomId:string,activity:ActivityConfig):Promise<void>;setDeskLock(roomId:string,deskId:string,locked:boolean):Promise<void>;setAllLocks(roomId:string,locked:boolean):Promise<void>;moveStudent(roomId:string,studentId:string,deskId:string):Promise<void>;submitAttempt(levelId:number,steps:string[]):Promise<{correct:boolean;feedback:string;score:number;explanation:string}>};
 const Context=createContext<Store|null>(null);
-async function request<T>(path:string,method="GET",body?:unknown):Promise<T>{const response=await fetch(path,{method,headers:{"content-type":"application/json"},body:body?JSON.stringify(body):undefined,cache:"no-store"});const data=await response.json() as {error?:string};if(!response.ok)throw new Error(data.error??"เชื่อมต่อห้องเรียนไม่ได้");return data as T}
+async function request<T>(path:string,method="GET",body?:unknown,signal?:AbortSignal):Promise<T>{const response=await fetch(path,{method,headers:{"content-type":"application/json"},body:body?JSON.stringify(body):undefined,cache:"no-store",signal});const data=await response.json() as {error?:string};if(!response.ok)throw new Error(data.error??"เชื่อมต่อห้องเรียนไม่ได้");return data as T}
 
 export function DemoProvider({children}:{children:React.ReactNode}){
+  const pathname=usePathname();
   const [rooms,setRooms]=useState<Classroom[]>(seed);
   const [currentStudent,setCurrentStudent]=useState<Session|undefined>();
   const [tokens,setTokens]=useState<Record<string,string>>({});
@@ -25,11 +27,32 @@ export function DemoProvider({children}:{children:React.ReactNode}){
   const [error,setError]=useState("");
   const putRoom=useCallback((room:Classroom)=>setRooms(previous=>{const current=previous.find(item=>item.id===room.id);if(current&&JSON.stringify(current)===JSON.stringify(room))return previous;return[room,...previous.filter(item=>item.id!==room.id)]}),[]);
   useEffect(()=>{try{const saved=localStorage.getItem(KEY);if(saved)setRooms(normalizeRooms(JSON.parse(saved)));const session=localStorage.getItem(SESSION);if(session)setCurrentStudent(JSON.parse(session));const teacher=localStorage.getItem(TEACHERS);if(teacher)setTokens(JSON.parse(teacher))}finally{setReady(true)}},[]);
-  useEffect(()=>{if(ready)localStorage.setItem(KEY,JSON.stringify(rooms))},[rooms,ready]);
+  useEffect(()=>{if(!ready)return;const timer=setTimeout(()=>localStorage.setItem(KEY,JSON.stringify(rooms)),600);return()=>clearTimeout(timer)},[rooms,ready]);
   useEffect(()=>{if(ready)localStorage.setItem(TEACHERS,JSON.stringify(tokens))},[tokens,ready]);
   useEffect(()=>{if(!ready)return;const sync=(event:StorageEvent)=>{if(event.key===KEY&&event.newValue)setRooms(normalizeRooms(JSON.parse(event.newValue)))};addEventListener("storage",sync);return()=>removeEventListener("storage",sync)},[ready]);
-  const roomIds=rooms.map(r=>r.id).join(",");const studentRoomId=currentStudent?.roomId;
-  useEffect(()=>{if(!ready)return;let cancelled=false;const refresh=async()=>{const known=new Set(roomIds?roomIds.split(","):[]);if(studentRoomId)known.add(studentRoomId);for(const id of known){try{const data=await request<{room:Classroom}>(`/api/rooms/${encodeURIComponent(id)}`);if(!cancelled)putRoom(data.room)}catch{/* A local room may not yet be published. */}}};void refresh();const interval=setInterval(refresh,2500);return()=>{cancelled=true;clearInterval(interval)}},[ready,studentRoomId,roomIds,putRoom]);
+  const roomIds=rooms.map(r=>r.id).sort().join(",");
+  const activeTeacherRoom=pathname?.match(/^\/teacher\/classrooms\/([^/]+)/)?.[1];
+  const isDashboard=pathname==="/teacher/dashboard";
+  const watchKey=isDashboard?roomIds:activeTeacherRoom&&activeTeacherRoom!=="new"?activeTeacherRoom:pathname?.startsWith("/student/")?currentStudent?.roomId??"":"";
+  useEffect(()=>{
+    if(!ready||!watchKey)return;
+    let cancelled=false;
+    let inFlight=false;
+    const controller=new AbortController();
+    const refresh=async()=>{
+      if(inFlight||document.visibilityState==="hidden")return;
+      inFlight=true;
+      await Promise.all(watchKey.split(",").filter(Boolean).map(async id=>{
+        try{const data=await request<{room:Classroom}>(`/api/rooms/${encodeURIComponent(id)}`,"GET",undefined,controller.signal);if(!cancelled)putRoom(data.room)}catch{/* Keep the last known state until the connection returns. */}
+      }));
+      inFlight=false;
+    };
+    const resume=()=>{if(document.visibilityState==="visible")void refresh()};
+    void refresh();
+    const interval=setInterval(()=>void refresh(),isDashboard?15000:2500);
+    document.addEventListener("visibilitychange",resume);
+    return()=>{cancelled=true;controller.abort();clearInterval(interval);document.removeEventListener("visibilitychange",resume)};
+  },[ready,watchKey,isDashboard,putRoom]);
   const createRoom:Store["createRoom"]=async input=>{const room:Classroom={id:crypto.randomUUID(),code:Array.from(crypto.getRandomValues(new Uint8Array(6)),n=>"ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[n%32]).join(""),name:input.name,subject:input.subject,layout:input.layout,status:"OPEN",catalogVersion:2,desks:desks(input.count),students:[],activity:defaultActivity,createdAt:new Date().toISOString()};try{const data=await request<{room:Classroom;teacherToken:string}>("/api/rooms","POST",{room});putRoom(data.room);setTokens(old=>({...old,[room.id]:data.teacherToken}));return data.room}catch(e){setError(e instanceof Error?e.message:"สร้างห้องไม่สำเร็จ");throw e}};
   const join:Store["join"]=async(code,nickname)=>{try{setError("");const data=await request<{room:Classroom;student:Student;token:string}>(`/api/rooms/${encodeURIComponent(code.toUpperCase())}`,"PATCH",{action:"join",nickname});putRoom(data.room);const session={roomId:data.room.id,studentId:data.student.id,token:data.token};setCurrentStudent(session);localStorage.setItem(SESSION,JSON.stringify(session));return data}catch(e){setError(e instanceof Error?e.message:"เข้าห้องไม่ได้");return null}};
   const studentAction=async(action:string,details:Record<string,unknown>={})=>{if(!currentStudent?.token)throw new Error("กรุณาสแกน QR เข้าห้องอีกครั้ง");const data=await request<{room:Classroom}>(`/api/rooms/${currentStudent.roomId}`,"PATCH",{action,token:currentStudent.token,...details});putRoom(data.room)};

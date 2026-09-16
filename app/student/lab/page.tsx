@@ -15,8 +15,8 @@ import { useMemo, useState } from "react";
 export default function Lab(){
   const store=useDemo();
   const router=useRouter();
-  const now=useGameClock();
   const {room,student}=currentStudentFrom(store);
+  const now=useGameClock(room);
   const catalog=room?.catalogVersion===2?LEVELS:LEGACY_LEVELS;
   const activeLevels=room?.activity.levelIds??catalog.map(item=>item.id);
   const [success,setSuccess]=useState<{levelId:number;score:number;explanation:string}|null>(null);

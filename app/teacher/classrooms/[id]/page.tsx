@@ -19,8 +19,8 @@ export default function TeacherRoom(){
   const [notice,setNotice]=useState("");
   const [qrOpen,setQrOpen]=useState(false);
   const [configOpen,setConfigOpen]=useState(false);
-  const now=useGameClock();
   const room=store.rooms.find(r=>r.id===id);
+  const now=useGameClock(room);
   if(!store.ready)return <AppShell title="ห้องเรียนสด"><LoadingState/></AppShell>;
   if(!room)return <AppShell title="ห้องเรียนสด"><main className="empty-state"><h1>ไม่พบห้องเรียน</h1><button className="primary-button" onClick={()=>router.push("/teacher/dashboard")}>กลับแดชบอร์ด</button></main></AppShell>;
   const joinUrl=`${typeof location!=="undefined"?location.origin:""}/join/${room.code}`;

@@ -4,9 +4,17 @@ import { useEffect, useState } from "react";
 import type { Classroom } from "@/lib/types";
 import { countdownSeconds, gameIsLive } from "@/lib/live-game";
 
-export function useGameClock(){
+export function useGameClock(room?:Pick<Classroom,"status"|"gameStartsAt">){
   const [now,setNow]=useState(0);
-  useEffect(()=>{const tick=()=>setNow(Date.now());const first=setTimeout(tick,0);const timer=setInterval(tick,200);return()=>{clearTimeout(first);clearInterval(timer)}},[]);
+  const status=room?.status;
+  const startsAt=room?.gameStartsAt;
+  useEffect(()=>{
+    const tick=()=>setNow(Date.now());
+    const first=setTimeout(tick,0);
+    if(status!=="RUNNING"||!startsAt)return()=>clearTimeout(first);
+    const timer=setInterval(()=>{tick();if(Date.now()>=startsAt)clearInterval(timer)},200);
+    return()=>{clearTimeout(first);clearInterval(timer)};
+  },[status,startsAt]);
   return now;
 }
 
