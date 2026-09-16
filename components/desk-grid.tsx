@@ -1,6 +1,7 @@
 "use client";
 
-import { LockKeyhole, Unlock, UserRound } from "lucide-react";
+import { LockKeyhole, Unlock } from "lucide-react";
+import { Avatar } from "@/components/avatar";
 import type { Classroom, Desk } from "@/lib/types";
 import { deskState } from "@/lib/desk";
 
@@ -9,7 +10,7 @@ const labels={AVAILABLE:"ว่าง · เลือกได้",OCCUPIED:"ม
 function DeskContent({desk,room}:{desk:Desk;room:Classroom}){
   const state=deskState(desk);
   const student=room.students.find(s=>s.id===desk.occupantId);
-  return <><span className="desk-top"><strong>{desk.label}</strong>{desk.locked?<LockKeyhole size={15}/>:<Unlock size={15}/>}</span><span className="desk-person">{student?<><UserRound size={17}/>{student.nickname}</>:labels[state]}</span></>;
+  return <><span className="desk-top"><strong>{desk.label}</strong>{desk.locked?<LockKeyhole size={15}/>:<Unlock size={15}/>}</span><span className="desk-person">{student?<><Avatar value={student.avatar} size={32}/><span><b>{student.nickname}</b>{student.handRaised&&<small>ยกมืออยู่</small>}</span></>:labels[state]}</span></>;
 }
 
 export function DeskGrid({room,onSelect,onLock,selectedId}:{room:Classroom;onSelect?:(id:string)=>void;onLock?:(id:string,locked:boolean)=>void;selectedId?:string}){

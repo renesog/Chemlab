@@ -11,12 +11,15 @@ export default function Lab(){
   const store=useDemo();
   const router=useRouter();
   const {room,student}=currentStudentFrom(store);
-  const level=LEVELS[(student?.currentLevel??1)-1]??LEVELS[7];
+  const activeLevels=room?.activity.levelIds??LEVELS.map(item=>item.id);
+  const levelIndex=Math.max(0,activeLevels.indexOf(student?.currentLevel??activeLevels[0]));
+  const level=LEVELS.find(item=>item.id===activeLevels[levelIndex])??LEVELS[0];
   const [selected,setSelected]=useState<string[]>([]);
   const [attempts,setAttempts]=useState(0);
   const [feedback,setFeedback]=useState<{ok:boolean;text:string}|null>(null);
   const [busy,setBusy]=useState(false);
-  const score=Math.max(1,5-attempts);
+  const maxPoints=room?.activity.pointsByLevel[level.id]??5;
+  const score=Math.max(1,maxPoints-attempts);
   const available=useMemo(()=>level.equipment.filter(e=>!selected.includes(e.id)),[level,selected]);
 
   if(!room||!student)return <AppShell title="ห้องทดลอง"><main className="empty-state"><h1>กรุณาเข้าห้องก่อน</h1><button className="primary-button" onClick={()=>router.push("/join")}>ใส่รหัสห้อง</button></main></AppShell>;
@@ -32,14 +35,14 @@ export default function Lab(){
     if(!selected.length){setFeedback({ok:false,text:"เลือกขั้นตอนอย่างน้อย 1 ขั้นตอนก่อนส่งคำตอบ"});return;}
     setBusy(true);
     try{
-      const res=await fetch("/api/attempt",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({levelId:level.id,steps:selected,previousAttempts:attempts})});
+      const res=await fetch("/api/attempt",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({levelId:level.id,steps:selected,previousAttempts:attempts,maxPoints})});
       const data=await res.json();
       if(!res.ok)throw new Error(data.error);
       setFeedback({ok:data.correct,text:data.feedback});
       if(data.correct){
         setTimeout(()=>{
           store.recordAttempt(level.id,true,data.score);
-          if(level.id===8)router.push("/student/results");
+          if(levelIndex===activeLevels.length-1)router.push("/student/results");
           else{setSelected([]);setAttempts(0);setFeedback(null)}
         },800);
       }else{
@@ -52,11 +55,11 @@ export default function Lab(){
 
   return <AppShell title="ห้องทดลอง" back="/student/classroom"><main className="lab-shell">
     <header className="lab-header">
-      <div><p className="eyebrow">ด่าน {level.id} จาก 8</p><h1>{level.mixture}</h1><p>{level.objective}</p></div>
-      <div className="score-card"><Trophy/><span><small>คะแนนด่านนี้</small><strong>{score}<em>/5</em></strong></span></div>
+      <div><p className="eyebrow">{room.activity.title} · ด่าน {levelIndex+1} จาก {activeLevels.length}</p><h1>{level.mixture}</h1><p>{level.objective}</p></div>
+      <div className="score-card"><Trophy/><span><small>คะแนนด่านนี้</small><strong>{score}<em>/{maxPoints}</em></strong></span></div>
     </header>
-    <div className="level-progress" aria-label={`ความคืบหน้าด่าน ${level.id} จาก 8`}>
-      {LEVELS.map(item=><span key={item.id} className={item.id<level.id?"done":item.id===level.id?"current":""}><i>{item.id<level.id?"✓":item.id}</i><small>{item.id===level.id?"กำลังทำ":""}</small></span>)}
+    <div className="level-progress" style={{gridTemplateColumns:`repeat(${activeLevels.length},1fr)`}} aria-label={`ความคืบหน้าด่าน ${levelIndex+1} จาก ${activeLevels.length}`}>
+      {activeLevels.map((id,index)=><span key={id} className={index<levelIndex?"done":index===levelIndex?"current":""}><i>{index<levelIndex?"✓":index+1}</i><small>{index===levelIndex?"กำลังทำ":""}</small></span>)}
     </div>
 
     <div className="lab-grid">

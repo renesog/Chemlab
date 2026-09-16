@@ -5,7 +5,7 @@ const ANSWERS: Record<number, string[]> = {
   8: ["magnet", "dissolve", "filter-sand", "evaporate"],
 };
 
-export function scoreForAttempts(attempts: number) { return Math.max(1, 5 - Math.max(0, attempts)); }
+export function scoreForAttempts(attempts: number, maxPoints = 5) { return Math.max(1, Math.max(1, maxPoints) - Math.max(0, attempts)); }
 export function validateSequence(levelId: number, submitted: string[]) {
   const expected = ANSWERS[levelId];
   if (!expected || submitted.length !== expected.length) return false;
