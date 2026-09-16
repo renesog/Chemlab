@@ -25,3 +25,15 @@
 .teacher-profile-link .teacher-profile-badge { flex-basis: 38px; width: 38px; height: 38px; border-radius: 9px; }
 .teacher-profile-link svg { width: 21px; height: 21px; }
 @media(max-width:650px) { .teacher-heading-actions { align-items: stretch; flex-direction: column; width: 100%; } .teacher-profile-link { justify-content: center; } }
+.room-row.room-row-manage { display:flex; gap:0; padding:0 8px 0 0; cursor:default; }
+.room-open { display:grid; grid-template-columns:auto minmax(180px,1fr) auto auto auto; align-items:center; gap:18px; flex:1; min-width:0; min-height:88px; padding:18px 20px; border:0; border-radius:15px; background:transparent; color:var(--ink); text-align:left; cursor:pointer; }
+.room-open:focus-visible,.room-delete:focus-visible { outline:3px solid var(--cyan); outline-offset:2px; }
+.room-delete { display:grid; place-items:center; flex:0 0 44px; width:44px; height:44px; border:1px solid transparent; border-radius:10px; background:transparent; color:#a83a3a; cursor:pointer; }
+.room-delete:hover { border-color:#f1cccc; background:#fff2f2; }
+.delete-room-dialog { background:#fff; color:var(--navy); border:1px solid var(--line); border-radius:16px; padding:26px; box-shadow:0 24px 70px #0b28404d; }
+.delete-room-dialog [data-slot="alert-dialog-description"] { color:var(--muted); font-size:1rem; line-height:1.6; }
+.delete-room-confirm { min-height:44px; padding:9px 16px; border:0; border-radius:9px; background:#ae3434; color:#fff; font:inherit; font-weight:700; cursor:pointer; }
+.delete-room-confirm:hover { background:#912a2a; }
+.delete-room-confirm:disabled { opacity:.6; cursor:wait; }
+@media(max-width:900px) { .room-open { grid-template-columns:auto minmax(0,1fr) auto; } .room-open .room-meta,.room-open code { display:none; } }
+@media(max-width:650px) { .room-open { gap:12px; min-height:76px; padding:14px 10px 14px 15px; } .room-delete { flex-basis:44px; } }
