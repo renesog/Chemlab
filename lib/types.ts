@@ -8,4 +8,4 @@ export type ActivityConfig = {
 };
 export type Student = { id: string; nickname: string; avatar: Avatar; deskId?: string; handRaised: boolean; currentLevel: number; totalScore: number; wrongAttempts: number; attemptsByLevel?: Record<number,number>; completed: number[] };
 export type Desk = { id: string; label: string; locked: boolean; occupantId?: string; x: number; y: number };
-export type Classroom = { id: string; code: string; name: string; subject: string; layout: "ROWS" | "U_SHAPE" | "GROUPS"; status: RoomStatus; gameStartsAt?: number; desks: Desk[]; students: Student[]; activity: ActivityConfig; createdAt: string };
+export type Classroom = { id: string; code: string; name: string; subject: string; layout: "ROWS" | "U_SHAPE" | "GROUPS"; status: RoomStatus; gameStartsAt?: number; catalogVersion?: 2; desks: Desk[]; students: Student[]; activity: ActivityConfig; createdAt: string };
