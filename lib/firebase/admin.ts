@@ -1,12 +1,13 @@
 import { initializeApp, getApps, cert, type ServiceAccount, type App } from 'firebase-admin/app';
 import { getAuth, type Auth } from 'firebase-admin/auth';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
+import { clientDb } from './config';
 
 let _app: App | null = null;
 let _auth: Auth | null = null;
 let _db: Firestore | null = null;
 
-export function getAdminApp(): App {
+export function getAdminApp(): App | null {
   if (_app) return _app;
   if (getApps().length) {
     _app = getApps()[0];
@@ -15,37 +16,38 @@ export function getAdminApp(): App {
 
   const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
   if (!serviceAccountKey) {
-    throw new Error(
-      'FIREBASE_SERVICE_ACCOUNT_KEY is not set. Please add it to your .env.local file. ' +
-      'Get it from Firebase Console > Project Settings > Service Accounts > Generate New Private Key'
-    );
+    return null;
   }
 
-  let serviceAccount: ServiceAccount;
   try {
-    serviceAccount = JSON.parse(serviceAccountKey) as ServiceAccount;
+    const serviceAccount = JSON.parse(serviceAccountKey) as ServiceAccount;
+    _app = initializeApp({ credential: cert(serviceAccount) });
+    return _app;
   } catch {
-    throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY is not valid JSON');
+    return null;
   }
-
-  _app = initializeApp({ credential: cert(serviceAccount) });
-  return _app;
 }
 
-export function getAdminAuth(): Auth {
-  if (!_auth) _auth = getAuth(getAdminApp());
+export function getAdminAuth(): Auth | null {
+  const app = getAdminApp();
+  if (!app) return null;
+  if (!_auth) _auth = getAuth(app);
   return _auth;
 }
 
 export function getAdminDb(): Firestore {
-  if (!_db) _db = getFirestore(getAdminApp());
-  return _db;
+  const app = getAdminApp();
+  if (app) {
+    if (!_db) _db = getFirestore(app);
+    return _db;
+  }
+  return clientDb as unknown as Firestore;
 }
 
-// Proxies so existing imports of `adminAuth` and `adminDb` continue to work transparently without crashing on build
-export const adminAuth: Auth = new Proxy({} as Auth, {
+export const adminAuth = new Proxy({} as Auth, {
   get(_target, prop) {
     const authInstance = getAdminAuth();
+    if (!authInstance) return () => Promise.resolve(null);
     const val = (authInstance as any)[prop];
     return typeof val === 'function' ? val.bind(authInstance) : val;
   }

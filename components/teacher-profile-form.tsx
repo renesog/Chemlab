@@ -58,11 +58,18 @@ export function TeacherProfileForm({
         },
         body: JSON.stringify(draft),
       });
-      const data = (await response.json()) as { error?: string };
+      let data: { error?: string } = {};
+      try {
+        data = (await response.json()) as { error?: string };
+      } catch {
+        const text = await response.text().catch(() => "");
+        throw new Error(text || `เซิร์ฟเวอร์ตอบกลับรหัส ${response.status}`);
+      }
       if (!response.ok) throw new Error(data.error ?? "บันทึกโปรไฟล์ไม่สำเร็จ");
       router.push("/teacher/dashboard");
       router.refresh();
     } catch (cause) {
+      console.error("Profile submit error:", cause);
       setError(cause instanceof Error ? cause.message : "บันทึกโปรไฟล์ไม่สำเร็จ");
     } finally {
       setBusy(false);

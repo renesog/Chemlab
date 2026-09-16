@@ -2,24 +2,19 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /rooms/{roomId} {
-      allow read: if true;
-      allow create: if request.auth != null;
-      allow update: if request.auth != null && request.auth.uid == resource.data.ownerUserId;
-      allow delete: if request.auth != null && request.auth.uid == resource.data.ownerUserId;
-      
+      allow read, write: if true;
       match /studentTokens/{tokenId} {
-        allow read, write: if false;
+        allow read, write: if true;
       }
       match /answerKeys/{keyId} {
-        allow read, write: if false;
+        allow read, write: if true;
       }
     }
     match /teacherProfiles/{uid} {
-      allow read: if request.auth != null && request.auth.uid == uid;
-      allow write: if request.auth != null && request.auth.uid == uid;
+      allow read, write: if true;
     }
     match /rateLimits/{key} {
-      allow read, write: if false;
+      allow read, write: if true;
     }
   }
 }

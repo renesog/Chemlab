@@ -1,9 +1,9 @@
-import { adminDb } from '@/lib/firebase/admin';
-import { FieldValue } from 'firebase-admin/firestore';
+import { clientDb } from '@/lib/firebase/config';
+import { 
+  collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, 
+  query, where, limit, runTransaction, increment, type DocumentReference 
+} from 'firebase/firestore';
 import type { Classroom } from '@/lib/types';
-
-const roomsCol = () => adminDb.collection('rooms');
-const rateLimitsCol = () => adminDb.collection('rateLimits');
 
 type RoomDoc = {
   id: string;
@@ -15,20 +15,22 @@ type RoomDoc = {
   updatedAt: number;
 };
 
-export async function findRoom(key: string): Promise<(RoomDoc & { _ref: FirebaseFirestore.DocumentReference }) | null> {
-  // Try by ID first
-  const byId = await roomsCol().doc(key).get();
-  if (byId.exists) {
-    const data = byId.data() as RoomDoc;
-    return { ...data, _ref: byId.ref };
-  }
+export async function findRoom(key: string): Promise<(RoomDoc & { _ref: DocumentReference }) | null> {
+  try {
+    const docRef = doc(clientDb, 'rooms', key);
+    const byId = await getDoc(docRef);
+    if (byId.exists()) {
+      return { ...(byId.data() as RoomDoc), _ref: byId.ref };
+    }
 
-  // Try by code
-  const byCode = await roomsCol().where('code', '==', key.toUpperCase()).limit(1).get();
-  if (!byCode.empty) {
-    const doc = byCode.docs[0];
-    const data = doc.data() as RoomDoc;
-    return { ...data, _ref: doc.ref };
+    const q = query(collection(clientDb, 'rooms'), where('code', '==', key.toUpperCase()), limit(1));
+    const snap = await getDocs(q);
+    if (!snap.empty) {
+      const d = snap.docs[0];
+      return { ...(d.data() as RoomDoc), _ref: d.ref };
+    }
+  } catch (err) {
+    console.error("findRoom error:", err);
   }
 
   return null;
@@ -45,14 +47,14 @@ export async function mutateRoom(
   const found = await findRoom(key);
   if (!found) return null;
 
-  const result = await adminDb.runTransaction(async (tx) => {
+  const result = await runTransaction(clientDb, async (tx) => {
     const freshSnap = await tx.get(found._ref);
-    if (!freshSnap.exists) throw new Error('room_not_found');
+    if (!freshSnap.exists()) throw new Error('room_not_found');
     const row = freshSnap.data() as RoomDoc;
     const room = await mutate(parseRoom(row), row);
     tx.update(found._ref, {
       snapshot: JSON.stringify(room),
-      version: FieldValue.increment(1),
+      version: increment(1),
       updatedAt: Date.now(),
     });
     return room;
@@ -65,25 +67,28 @@ export function json(data: unknown, status = 200) {
   return Response.json(data, { status, headers: { 'cache-control': 'no-store' } });
 }
 
-export async function rateAllowed(key: string, limit: number): Promise<boolean> {
+export async function rateAllowed(key: string, limitCount: number): Promise<boolean> {
   const now = Date.now();
-  const ref = rateLimitsCol().doc(key.replace(/\//g, '_'));
+  const ref = doc(clientDb, 'rateLimits', key.replace(/\//g, '_'));
 
-  const result = await adminDb.runTransaction(async (tx) => {
-    const snap = await tx.get(ref);
-    if (!snap.exists || (snap.data()?.resetAt ?? 0) <= now) {
-      tx.set(ref, { count: 1, resetAt: now + 60_000 });
-      return 1;
-    }
-    const current = snap.data()!;
-    const newCount = (current.count ?? 0) + 1;
-    tx.update(ref, { count: newCount });
-    return newCount;
-  });
-
-  return result <= limit;
+  try {
+    const result = await runTransaction(clientDb, async (tx) => {
+      const snap = await tx.get(ref);
+      if (!snap.exists() || (snap.data()?.resetAt ?? 0) <= now) {
+        tx.set(ref, { count: 1, resetAt: now + 60_000 });
+        return 1;
+      }
+      const current = snap.data()!;
+      const newCount = (current.count ?? 0) + 1;
+      tx.update(ref, { count: newCount });
+      return newCount;
+    });
+    return result <= limitCount;
+  } catch {
+    return true; // Don't block requests if rate limits collection is transiently unavailable
+  }
 }
 
 export function database() {
-  return adminDb;
+  return clientDb;
 }

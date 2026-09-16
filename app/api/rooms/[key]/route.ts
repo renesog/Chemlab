@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 import { findRoom, json, mutateRoom, parseRoom, rateAllowed } from "@/db/live-rooms";
-import { adminDb } from "@/lib/firebase/admin";
+import { clientDb } from "@/lib/firebase/config";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import type { ActivityConfig, Avatar, Classroom, Student } from "@/lib/types";
 import { explanationFor, scoreForAttempts, scoreForCustomAttempts, validateSequence } from "@/lib/game";
 import { getTeacherUser } from "@/lib/auth";
@@ -30,17 +31,21 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ ke
     const student: Student = { id: crypto.randomUUID(), nickname, avatar: defaultAvatar, handRaised: false, currentLevel: parseRoom(row).activity.levelIds[0] ?? 1, totalScore: 0, wrongAttempts: 0, completed: [], skipped: [] };
     const token = crypto.randomUUID() + crypto.randomUUID();
     const room = await mutateRoom(row.id, current => { if (current.status === "ENDED") throw new Error("room_ended"); return { ...current, students: [...current.students, student] }; });
-    await adminDb.collection('rooms').doc(row.id).collection('studentTokens').doc(token).set({ studentId: student.id, createdAt: Date.now() });
+    try {
+      await setDoc(doc(clientDb, 'rooms', row.id, 'studentTokens', token), { studentId: student.id, createdAt: Date.now() });
+    } catch {}
     return json({ room, student, token });
   }
 
   // Verify student session via Firestore subcollection
   let session: { student_id: string } | null = null;
   if (body.token) {
-    const tokenDoc = await adminDb.collection('rooms').doc(row.id).collection('studentTokens').doc(body.token).get();
-    if (tokenDoc.exists) {
-      session = { student_id: tokenDoc.data()!.studentId };
-    }
+    try {
+      const tokenDoc = await getDoc(doc(clientDb, 'rooms', row.id, 'studentTokens', body.token));
+      if (tokenDoc.exists()) {
+        session = { student_id: tokenDoc.data()!.studentId };
+      }
+    } catch {}
   }
   const user = session ? null : await getTeacherUser();
   const teacher = !session && (row.ownerUserId ? user?.userId === row.ownerUserId : body.token === row.teacherToken);

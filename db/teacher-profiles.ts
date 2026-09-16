@@ -1,17 +1,21 @@
-import { adminDb } from '@/lib/firebase/admin';
+import { clientDb } from '@/lib/firebase/config';
+import { doc, getDoc } from 'firebase/firestore';
 import type { TeacherProfile } from '@/lib/types';
 
-const profilesCol = () => adminDb.collection('teacherProfiles');
-
 export async function findTeacherProfile(userId: string): Promise<TeacherProfile | null> {
-  const doc = await profilesCol().doc(userId).get();
-  if (!doc.exists) return null;
-  const data = doc.data()!;
-  return {
-    nickname: data.nickname,
-    avatar: data.avatar as TeacherProfile['avatar'],
-    color: data.color as TeacherProfile['color'],
-  };
+  try {
+    const snap = await getDoc(doc(clientDb, 'teacherProfiles', userId));
+    if (!snap.exists()) return null;
+    const data = snap.data()!;
+    return {
+      nickname: data.nickname,
+      avatar: data.avatar as TeacherProfile['avatar'],
+      color: data.color as TeacherProfile['color'],
+    };
+  } catch (err) {
+    console.error("findTeacherProfile error:", err);
+    return null;
+  }
 }
 
 export function validTeacherProfile(value: unknown): value is TeacherProfile {
