@@ -19,10 +19,11 @@ export async function PATCH(request:Request,{params}:{params:Promise<{key:string
     await database().prepare("insert into live_student_sessions(token,room_id,student_id,created_at) values(?1,?2,?3,?4)").bind(token,row.id,student.id,Date.now()).run();
     return json({room,student,token});
   }
-  const user=await getChatGPTUser();
-  const teacher=row.owner_user_id?user?.userId===row.owner_user_id:body.token===row.teacher_token;
-  const session=!teacher&&body.token?await database().prepare("select student_id from live_student_sessions where token=?1 and room_id=?2").bind(body.token,row.id).first<{student_id:string}>():null;
+  const session=body.token?await database().prepare("select student_id from live_student_sessions where token=?1 and room_id=?2").bind(body.token,row.id).first<{student_id:string}>():null;
+  const user=session?null:await getChatGPTUser();
+  const teacher=!session&&(row.owner_user_id?user?.userId===row.owner_user_id:body.token===row.teacher_token);
   if(!teacher&&!session)return json({error:"เซสชันหมดอายุ กรุณาสแกน QR อีกครั้ง"},401);
+  if(body.action==="resume"&&session){const current=parseRoom(row);return current.students.some(student=>student.id===session.student_id)?json({room:current}):json({error:"ไม่พบนักเรียนในห้องนี้ กรุณาเข้าห้องอีกครั้ง"},401)}
   if(body.action==="hint"&&!teacher){
     if(!session||!Number.isInteger(body.levelId))return json({error:"ข้อมูลคำใบ้ไม่ถูกต้อง"},400);
     if(!await rateAllowed(`hint:${row.id}:${session.student_id}`,15))return json({error:"ขอคำใบ้ถี่เกินไป"},429);
