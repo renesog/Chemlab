@@ -38,6 +38,8 @@ yarn-error.log*
 next-env.d.ts
 
 # firebase
+.firebase/
+firebase-debug.log*
 firebase-service-account*.json
 
 # legacy (safe to remove)
