@@ -1,0 +1,13 @@
+var R=require("../../../chunks/ssr/[turbopack]_runtime.js")("server/app/student/classroom/page.js")
+R.c("server/chunks/ssr/[root-of-the-server]__12kfcnr._.js")
+R.c("server/chunks/ssr/node_modules_next_dist_esm_build_templates_app-page_0p7jrw_.js")
+R.c("server/chunks/ssr/[root-of-the-server]__0iue4fo._.js")
+R.c("server/chunks/ssr/node_modules_06zs3~7._.js")
+R.c("server/chunks/ssr/_0wctg98._.js")
+R.c("server/chunks/ssr/node_modules_next_dist_client_components_0inhx6q._.js")
+R.c("server/chunks/ssr/node_modules_next_dist_client_components_builtin_forbidden_0ghu-f7.js")
+R.c("server/chunks/ssr/node_modules_next_dist_client_components_builtin_unauthorized_0cjv-23.js")
+R.c("server/chunks/ssr/node_modules_next_dist_client_components_builtin_global-error_0lgvd_..js")
+R.c("server/chunks/ssr/_next-internal_server_app_student_classroom_page_actions_0k3q3-0.js")
+R.m(15995)
+module.exports=R.m(15995).exports
