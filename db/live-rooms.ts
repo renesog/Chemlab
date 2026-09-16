@@ -1,9 +1,9 @@
 import { env } from "cloudflare:workers";
 import type { Classroom } from "@/lib/types";
 
-type RoomRow={id:string;code:string;snapshot:string;teacher_token:string;version:number};
+type RoomRow={id:string;code:string;snapshot:string;teacher_token:string;owner_user_id:string|null;version:number};
 export function database(){if(!env.DB)throw new Error("D1 binding DB is unavailable");return env.DB;}
-export async function findRoom(key:string){return database().prepare("select id,code,snapshot,teacher_token,version from live_rooms where id=?1 or code=?2 limit 1").bind(key,key.toUpperCase()).first<RoomRow>();}
+export async function findRoom(key:string){return database().prepare("select id,code,snapshot,teacher_token,owner_user_id,version from live_rooms where id=?1 or code=?2 limit 1").bind(key,key.toUpperCase()).first<RoomRow>();}
 export function parseRoom(row:RoomRow){return JSON.parse(row.snapshot) as Classroom;}
 export async function mutateRoom(key:string,mutate:(room:Classroom,row:RoomRow)=>Promise<Classroom>|Classroom){
   for(let attempt=0;attempt<4;attempt++){

@@ -1,0 +1,40 @@
+.activity-plan-actions { display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
+.question-builder { max-width:1280px; }
+.builder-form { display:grid; gap:20px; }
+.builder-overview { display:flex; flex-wrap:wrap; align-items:end; gap:20px; }
+.builder-overview > label:first-child { flex:1 1 280px; }
+.builder-overview > span { color:var(--muted); padding-bottom:12px; }
+.builder-overview label,.builder-fields label,.builder-score label { display:grid; gap:7px; font-weight:700; color:var(--navy); }
+.builder-overview input:not([type="checkbox"]),.builder-fields input,.builder-fields textarea,.builder-score input,.builder-tool-row input { width:100%; min-height:44px; padding:10px 12px; border:1px solid var(--line); border-radius:10px; background:#fff; color:var(--navy); font:inherit; }
+.builder-fields textarea { min-height:82px; resize:vertical; }
+.builder-layout { display:grid; grid-template-columns:minmax(190px,250px) minmax(0,1fr); align-items:start; gap:20px; }
+.builder-question-list { display:grid; gap:8px; }
+.builder-question-list h2 { margin:0 0 6px; font-size:1.1rem; }
+.builder-question-list button { display:flex; flex-direction:column; align-items:start; gap:3px; width:100%; min-height:48px; padding:10px 12px; border:1px solid var(--line); border-radius:10px; background:#fff; color:var(--navy); text-align:left; cursor:pointer; }
+.builder-question-list button.active { border-color:var(--cyan); background:var(--cyan-pale); }
+.builder-question-list button span { color:var(--muted); font-size:.86rem; }
+.builder-question-list .builder-add { flex-direction:row; align-items:center; justify-content:center; gap:8px; color:#087e8f; font-weight:700; }
+.builder-editor { display:grid; gap:24px; min-width:0; }
+.builder-editor h3 { margin:0; font-size:1rem; }
+.builder-fields { display:grid; gap:16px; }
+.builder-score { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+.builder-actions { display:flex; gap:5px; }
+.builder-actions button,.builder-tool-row button { display:grid; place-items:center; width:42px; height:42px; border:1px solid var(--line); border-radius:9px; background:#fff; color:var(--navy); cursor:pointer; }
+.builder-actions svg,.builder-tool-row button svg { width:18px; }
+.builder-tools { display:grid; gap:10px; }
+.builder-tools .section-title { align-items:end; }
+.builder-tools .section-title button { display:flex; align-items:center; gap:5px; min-height:42px; border:1px solid var(--line); border-radius:9px; padding:6px 10px; background:#fff; color:#087e8f; cursor:pointer; }
+.builder-tools .section-title button svg { width:17px; }
+.builder-tool-row { display:grid; grid-template-columns:28px minmax(0,1fr) 42px; align-items:center; gap:8px; }
+.builder-tool-row > span { color:var(--muted); text-align:center; }
+.builder-answer { display:grid; gap:10px; padding:16px; border:1px solid #b9dfe2; border-radius:12px; background:#f4fbfb; }
+.builder-answer p { margin:0; color:var(--muted); }
+.builder-answer-sequence,.builder-answer-options { display:flex; flex-wrap:wrap; gap:7px; min-height:32px; }
+.builder-answer-sequence button,.builder-answer-options button { min-height:40px; padding:7px 10px; border:1px solid #9ccbd1; border-radius:8px; background:#fff; color:var(--navy); cursor:pointer; }
+.builder-answer-sequence button { border-color:var(--cyan); background:var(--cyan-pale); font-weight:700; }
+.builder-save { display:flex; justify-content:flex-end; gap:10px; }
+.hint-toggle { display:flex!important; align-items:center; gap:9px; min-height:46px; cursor:pointer; }
+.hint-toggle input { width:19px; height:19px; accent-color:#078da1; }
+.hint-toggle svg { width:20px; color:#a67800; }
+.challenge-hint { padding:12px 14px; border:1px solid #e8d49b; border-radius:10px; background:#fff9e9; color:#664b06; }
+@media(max-width:760px) { .builder-layout { grid-template-columns:1fr; } .builder-question-list { display:flex; flex-wrap:wrap; } .builder-question-list h2 { width:100%; } .builder-question-list button { width:auto; min-width:118px; } .builder-score { grid-template-columns:1fr; } .builder-save { flex-wrap:wrap; } .builder-save button { flex:1; } }

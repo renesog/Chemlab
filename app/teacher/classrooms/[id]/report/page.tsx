@@ -1,7 +1,21 @@
 "use client";
+
 import { AppShell } from "@/components/app-shell";
 import { useDemo } from "@/lib/demo-store";
 import { Download } from "lucide-react";
 import { useParams } from "next/navigation";
 
-export default function Report(){const{id}=useParams<{id:string}>();const{rooms}=useDemo();const room=rooms.find(r=>r.id===id);function csv(){if(!room)return;const rows=[["nickname","desk","level","score","wrong_attempts"],...room.students.map(s=>[s.nickname,room.desks.find(d=>d.id===s.deskId)?.label??"",s.currentLevel,s.totalScore,s.wrongAttempts])];const blob=new Blob(["\uFEFF"+rows.map(r=>r.map(v=>`\"${String(v).replaceAll('"','""')}\"`).join(",")).join("\n")],{type:"text/csv;charset=utf-8"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`chemclass-${room.code}.csv`;a.click();URL.revokeObjectURL(a.href)}if(!room)return <AppShell title="รายงาน"><main className="empty-state"><h1>ไม่พบห้องเรียน</h1></main></AppShell>;return <AppShell title="รายงานผล" back={`/teacher/classrooms/${id}`}><main className="dashboard-shell"><div className="page-heading"><div><p className="eyebrow">รายงานผล</p><h1>{room.name}</h1><p>คะแนนและความก้าวหน้าล่าสุดของนักเรียน</p></div><button className="primary-button compact" onClick={csv}><Download/>ดาวน์โหลด CSV</button></div><section className="panel table-wrap"><table><thead><tr><th>นักเรียน</th><th>โต๊ะ</th><th>ด่านปัจจุบัน</th><th>คะแนน</th><th>ตอบผิด</th><th>ผ่านแล้ว</th></tr></thead><tbody>{room.students.length?room.students.map(s=><tr key={s.id}><td><strong>{s.nickname}</strong></td><td>{room.desks.find(d=>d.id===s.deskId)?.label??"—"}</td><td>{s.currentLevel}/8</td><td>{s.totalScore}</td><td>{s.wrongAttempts}</td><td>{s.completed.length} ด่าน</td></tr>):<tr><td colSpan={6} className="table-empty">ยังไม่มีผลการทดลอง</td></tr>}</tbody></table></section></main></AppShell>}
+export default function Report(){
+  const{id}=useParams<{id:string}>();
+  const{rooms}=useDemo();
+  const room=rooms.find(r=>r.id===id);
+  const levelNumber=(levelId:number)=>room?Math.max(1,room.activity.levelIds.indexOf(levelId)+1):1;
+  function csv(){
+    if(!room)return;
+    const rows=[["nickname","desk","level","score","wrong_attempts"],...room.students.map(s=>[s.nickname,room.desks.find(d=>d.id===s.deskId)?.label??"",levelNumber(s.currentLevel),s.totalScore,s.wrongAttempts])];
+    const blob=new Blob(["\uFEFF"+rows.map(r=>r.map(v=>`"${String(v).replaceAll('"','""')}"`).join(",")).join("\n")],{type:"text/csv;charset=utf-8"});
+    const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`chemclass-${room.code}.csv`;a.click();URL.revokeObjectURL(a.href);
+  }
+  if(!room)return <AppShell title="รายงาน"><main className="empty-state"><h1>ไม่พบห้องเรียน</h1></main></AppShell>;
+  return <AppShell title="รายงานผล" back={`/teacher/classrooms/${id}`}><main className="dashboard-shell"><div className="page-heading"><div><p className="eyebrow">รายงานผล</p><h1>{room.name}</h1><p>คะแนนและความก้าวหน้าล่าสุดของนักเรียน</p></div><button className="primary-button compact" onClick={csv}><Download/>ดาวน์โหลด CSV</button></div><section className="panel table-wrap"><table><thead><tr><th>นักเรียน</th><th>โต๊ะ</th><th>ด่านปัจจุบัน</th><th>คะแนน</th><th>ตอบผิด</th><th>ผ่านแล้ว</th></tr></thead><tbody>{room.students.length?room.students.map(s=><tr key={s.id}><td><strong>{s.nickname}</strong></td><td>{room.desks.find(d=>d.id===s.deskId)?.label??"—"}</td><td>{levelNumber(s.currentLevel)}/{room.activity.levelIds.length}</td><td>{s.totalScore}</td><td>{s.wrongAttempts}</td><td>{s.completed.length} ด่าน</td></tr>):<tr><td colSpan={6} className="table-empty">ยังไม่มีผลการทดลอง</td></tr>}</tbody></table></section></main></AppShell>;
+}

@@ -1,7 +1,14 @@
-"use client";
 import { AppShell } from "@/components/app-shell";
-import { Eye, LockKeyhole, Mail } from "lucide-react";
-import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
+import { TeacherProfileForm } from "@/components/teacher-profile-form";
+import { chatGPTSignInPath, getChatGPTUser } from "@/app/chatgpt-auth";
+import { findTeacherProfile } from "@/db/teacher-profiles";
+import { GraduationCap } from "lucide-react";
+import { redirect } from "next/navigation";
 
-export default function TeacherLogin(){const router=useRouter();const[error,setError]=useState("");function submit(e:FormEvent<HTMLFormElement>){e.preventDefault();const f=new FormData(e.currentTarget);if(!String(f.get("email")).includes("@")||String(f.get("password")).length<6){setError("กรุณากรอกอีเมลและรหัสผ่านอย่างน้อย 6 ตัวอักษร");return;}sessionStorage.setItem("chemclass-teacher","demo");router.push("/teacher/dashboard");}return <AppShell title="สำหรับครู"><main className="center-shell"><section className="form-card"><div className="section-icon"><LockKeyhole/></div><p className="eyebrow">พื้นที่สำหรับครู</p><h1>เข้าสู่ระบบ</h1><p className="muted">จัดการห้องเรียนและดูผลการทดลอง</p><form onSubmit={submit} className="form-stack"><label>อีเมล<div className="input-wrap"><Mail size={19}/><input name="email" type="email" autoComplete="email" placeholder="teacher@school.ac.th" required/></div></label><label>รหัสผ่าน<div className="input-wrap"><LockKeyhole size={19}/><input name="password" type="password" autoComplete="current-password" placeholder="อย่างน้อย 6 ตัวอักษร" required/><Eye size={18}/></div></label>{error&&<p className="error-box" role="alert">{error}</p>}<button className="primary-button" type="submit">เข้าสู่ระบบ</button></form><p className="demo-hint">สำหรับทดลอง: ใช้อีเมลรูปแบบใดก็ได้และรหัสผ่าน 6 ตัวขึ้นไป</p></section></main></AppShell>}
+export const dynamic="force-dynamic";
+
+export default async function TeacherLogin(){
+  const user=await getChatGPTUser();
+  if(user){const profile=await findTeacherProfile(user.userId);if(profile)redirect("/teacher/dashboard");}
+  return <AppShell title="สำหรับครู"><main className="center-shell"><section className="form-card teacher-account-card"><div className="section-icon"><GraduationCap/></div><p className="eyebrow">พื้นที่สำหรับครู</p><h1>{user?"สมัครโปรไฟล์ครู":"เริ่มใช้งานสำหรับครู"}</h1>{user?<TeacherProfileForm email={user.email} submitLabel="สร้างโปรไฟล์และเริ่มใช้งาน"/>:<><p className="muted">เข้าสู่ระบบอย่างปลอดภัยก่อนตั้งชื่อเล่นและสร้างห้องเรียน นักเรียนยังเข้าห้องผ่าน QR ได้โดยไม่ต้องสมัครบัญชี</p><a className="primary-button teacher-signin" href={chatGPTSignInPath("/teacher/login")} target="_top">เข้าสู่ระบบด้วย ChatGPT</a></>}</section></main></AppShell>;
+}

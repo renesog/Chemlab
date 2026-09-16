@@ -8,7 +8,7 @@ import { currentStudentFrom, useDemo } from "@/lib/demo-store";
 import { gameIsLive } from "@/lib/live-game";
 import { LEVELS } from "@/lib/levels";
 import { LEGACY_LEVELS } from "@/lib/legacy-levels";
-import { ArrowDown, ArrowRight, ArrowUp, CheckCircle2, CircleHelp, RotateCcw, Send, Trophy, X } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUp, CheckCircle2, CircleHelp, Lightbulb, RotateCcw, Send, Trophy, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
@@ -17,18 +17,20 @@ export default function Lab(){
   const router=useRouter();
   const {room,student}=currentStudentFrom(store);
   const now=useGameClock(room);
-  const catalog=room?.catalogVersion===2?LEVELS:LEGACY_LEVELS;
+  const catalog=room?.activity.mode==="QUESTIONS"?room.activity.customQuestions?.map(question=>({id:question.id,title:question.title,mixture:question.mixture,objective:question.objective,difficulty:1,equipment:question.equipment}))??[]:room?.catalogVersion===2?LEVELS:LEGACY_LEVELS;
   const activeLevels=room?.activity.levelIds??catalog.map(item=>item.id);
   const [success,setSuccess]=useState<{levelId:number;score:number;explanation:string}|null>(null);
   const levelIndex=Math.max(0,activeLevels.indexOf(success?.levelId??student?.currentLevel??activeLevels[0]));
-  const level=catalog.find(item=>item.id===activeLevels[levelIndex])??catalog[0];
+  const level=catalog.find(item=>item.id===activeLevels[levelIndex])??catalog[0]??LEVELS[0];
   const [selected,setSelected]=useState<string[]>([]);
   const [feedback,setFeedback]=useState<{ok:boolean;text:string}|null>(null);
+  const [hint,setHint]=useState("");
   const [busy,setBusy]=useState(false);
-  const maxPoints=room?.activity.pointsByLevel[level.id]??5;
-  const score=Math.max(1,maxPoints-(student?.attemptsByLevel?.[level.id]??0));
+  const customQuestion=room?.activity.mode==="QUESTIONS"?room.activity.customQuestions?.find(question=>question.id===level.id):undefined;
+  const maxPoints=customQuestion?.maxPoints??room?.activity.pointsByLevel[level.id]??5;
   const available=useMemo(()=>level.equipment.filter(e=>!selected.includes(e.id)),[level,selected]);
   const mistakes=student?.attemptsByLevel?.[level.id]??0;
+  const score=customQuestion?Math.max(1,Math.min(maxPoints,customQuestion.correctPoints)-mistakes*customQuestion.wrongPenalty):Math.max(1,maxPoints-mistakes);
 
   if(!room||!student)return <AppShell title="ห้องทดลอง"><main className="empty-state"><h1>กรุณาเข้าห้องก่อน</h1><button className="primary-button" onClick={()=>router.push("/join")}>ใส่รหัสห้อง</button></main></AppShell>;
   if(!gameIsLive(room,now)||!student.deskId)return <AppShell title="ห้องทดลอง"><main className="empty-state"><h1>กำลังรอคุณครูเริ่มเกม</h1><button className="primary-button" onClick={()=>router.push("/student/classroom")}>กลับไปห้องเรียน</button></main></AppShell>;
@@ -41,7 +43,7 @@ export default function Lab(){
   }
 
   function addStep(id:string){if(!level.equipment.some(item=>item.id===id))return;setSelected(old=>old.includes(id)?old:[...old,id]);setFeedback(null)}
-  function nextChallenge(){if(levelIndex===activeLevels.length-1){router.push("/student/results");return}setSelected([]);setFeedback(null);setSuccess(null)}
+  function nextChallenge(){if(levelIndex===activeLevels.length-1){router.push("/student/results");return}setSelected([]);setFeedback(null);setHint("");setSuccess(null)}
 
   async function submit(){
     if(!selected.length){setFeedback({ok:false,text:"เลือกขั้นตอนอย่างน้อย 1 ขั้นตอนก่อนส่งคำตอบ"});return;}
@@ -76,7 +78,8 @@ export default function Lab(){
           <span className="reorder-actions"><button onClick={()=>moveStep(index,-1)} disabled={index===0} aria-label={`เลื่อน ${item.label} ขึ้น`}><ArrowUp/></button><button onClick={()=>moveStep(index,1)} disabled={index===selected.length-1} aria-label={`เลื่อน ${item.label} ลง`}><ArrowDown/></button><button className="remove-step" onClick={()=>{setSelected(s=>s.filter(x=>x!==id));setFeedback(null)}} aria-label={`ลบ ${item.label}`}><X/></button></span>
         </li>})}</ol>:<div className="sequence-empty"><CircleHelp/><strong>ยังไม่มีขั้นตอน</strong><span>เลือกเครื่องมือจากรายการเพื่อเริ่มชาเลนจ์</span></div>}
         {feedback&&!feedback.ok&&<div className="feedback error" role="status"><CircleHelp/><span><strong>ยังไม่สำเร็จ ลองปรับแผน</strong>{feedback.text}</span></div>}
-        <div className="submit-zone"><span>ตอบผิดลดคะแนนที่จะได้ครั้งละ 1 · ต่ำสุด 1</span><button className="primary-button submit-answer" onClick={submit} disabled={busy||!!success||selected.length===0}>{busy?"กำลังทดลอง…":<><Send/>ทดลองแยกสาร</>}</button></div>
+        {room.activity.hintsEnabled&&<div className="challenge-hint"><button onClick={async()=>{try{setHint(await store.getHint(level.id))}catch(error){setHint(error instanceof Error?error.message:"เปิดคำใบ้ไม่ได้")}}}><Lightbulb/>ขอคำใบ้</button>{hint&&<p role="status">{hint}</p>}</div>}
+        <div className="submit-zone"><span>ตอบผิดลดคะแนนที่จะได้ครั้งละ {customQuestion?.wrongPenalty??1} · ต่ำสุด 1</span><button className="primary-button submit-answer" onClick={submit} disabled={busy||!!success||selected.length===0}>{busy?"กำลังทดลอง…":<><Send/>ทดลองแยกสาร</>}</button></div>
       </section>
     </div>
     {success&&<Dialog open onOpenChange={()=>{}}><DialogContent className="challenge-success" showCloseButton={false}><div className="challenge-success-icon"><CheckCircle2 size={46}/></div><p className="eyebrow">ชาเลนจ์ {levelIndex+1} สำเร็จ</p><DialogTitle id="challenge-success-title">แยกสารได้แล้ว!</DialogTitle><strong className="challenge-earned">+{success.score} คะแนน</strong><DialogDescription>{success.explanation}</DialogDescription><div className="separated-materials"><span>สารที่แยกได้</span><div>{level.mixture.split(/\s*\+\s*/).map((name,index)=><strong key={`${index}-${name}`}>{name.trim()}</strong>)}</div></div><button className="primary-button" onClick={nextChallenge}>{levelIndex===activeLevels.length-1?"ดูสรุปผล":"ไปชาเลนจ์ถัดไป"}<ArrowRight/></button></DialogContent></Dialog>}

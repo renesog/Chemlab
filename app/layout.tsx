@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./challenge.css";
+import "./teacher-account.css";
+import "./question-builder.css";
 import { DemoProvider } from "@/lib/demo-store";
 
 export const metadata: Metadata = {

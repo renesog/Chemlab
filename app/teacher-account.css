@@ -1,0 +1,27 @@
+.teacher-account-card { width: min(100%, 540px); }
+.teacher-signin { display: flex; justify-content: center; margin-top: 20px; text-decoration: none; }
+.teacher-profile-form { margin-top: 20px; }
+.teacher-profile-form > label { display: grid; gap: 7px; }
+.teacher-profile-form input { width: 100%; height: 46px; border: 1px solid var(--line); border-radius: 10px; padding: 0 12px; background: #fff; color: var(--navy); }
+.profile-preview { display: flex; align-items: center; gap: 13px; padding: 14px; border: 1px solid var(--line); border-radius: 13px; background: #f8fbfc; }
+.profile-preview strong,.profile-preview small { display: block; }
+.profile-preview strong { color: var(--navy); }
+.profile-preview small { color: var(--muted); }
+.teacher-profile-badge { display: grid; place-items: center; flex: 0 0 52px; width: 52px; height: 52px; border-radius: 14px; color: #fff; background: #078da1; }
+.teacher-profile-badge svg { width: 27px; height: 27px; }
+.teacher-profile-badge.navy { background: #0a2540; }
+.teacher-profile-badge.gold { background: #b28200; }
+.teacher-profile-form fieldset { border: 0; margin: 0; padding: 0; }
+.teacher-profile-form legend { margin-bottom: 8px; color: var(--navy); font-weight: 700; }
+.profile-choices,.profile-colors { display: flex; flex-wrap: wrap; gap: 8px; }
+.profile-choices button,.profile-colors button { display: flex; align-items: center; gap: 7px; min-height: 44px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff; color: var(--navy); cursor: pointer; }
+.profile-choices button.active,.profile-colors button.active { border: 2px solid var(--cyan); background: var(--cyan-pale); }
+.profile-choices svg { width: 19px; }
+.profile-colors .cyan::before,.profile-colors .navy::before,.profile-colors .gold::before { content: ""; width: 18px; height: 18px; border-radius: 50%; background: #078da1; }
+.profile-colors .navy::before { background: #0a2540; }
+.profile-colors .gold::before { background: #b28200; }
+.teacher-heading-actions { display: flex; align-items: center; gap: 10px; }
+.teacher-profile-link { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 12px; padding: 5px 12px 5px 5px; background: #fff; color: var(--navy); cursor: pointer; }
+.teacher-profile-link .teacher-profile-badge { flex-basis: 38px; width: 38px; height: 38px; border-radius: 9px; }
+.teacher-profile-link svg { width: 21px; height: 21px; }
+@media(max-width:650px) { .teacher-heading-actions { align-items: stretch; flex-direction: column; width: 100%; } .teacher-profile-link { justify-content: center; } }

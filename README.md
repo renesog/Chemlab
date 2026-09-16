@@ -1,4 +1,8 @@
-# vinext-starter
+# ChemClass Lab
+
+Thai virtual classroom and separation-lab challenge. Teachers sign in with ChatGPT on the Sites-hosted app, choose a nickname/profile, create rooms, and either use the preset levels or build 1–10 ordered equipment puzzles. Per-question correct points, wrong-answer penalty, maximum points, and optional hints are configured in the classroom before the game starts. Answer sequences and hint text are kept in a teacher-only D1 table; scoring runs on the server. Students join anonymously via QR or room link, create avatars, and choose desks.
+
+The deployment uses Sites D1 binding `DB` declared in `.openai/hosting.json`. Apply committed Drizzle migrations in order for local previews; Sites applies production migrations on publication. No application API key is required for ChatGPT sign-in: the Sites dispatcher owns that flow and injects authenticated identity headers. Do not commit `.env`, credentials, API keys, or service-role secrets. Legacy Supabase schema artifacts remain in `supabase/` for compatibility; the hosted live-room store currently uses D1.
 
 A clean full-stack starter running on [vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and Drizzle support.
 

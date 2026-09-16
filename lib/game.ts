@@ -16,6 +16,9 @@ const LEGACY_ANSWERS:Record<number,string[][]>={
 };
 
 export function scoreForAttempts(attempts: number, maxPoints = 5) { return Math.max(1, Math.max(1, maxPoints) - Math.max(0, attempts)); }
+export function scoreForCustomAttempts(attempts:number,correctPoints:number,wrongPenalty:number,maxPoints:number){
+  return Math.max(1,Math.min(maxPoints,correctPoints)-Math.max(0,attempts)*wrongPenalty);
+}
 export function validateSequence(levelId: number, submitted: string[],catalogVersion:1|2=2) {
   const expected = (catalogVersion===2?ANSWERS:LEGACY_ANSWERS)[levelId];
   return !!expected?.some(sequence=>submitted.length===sequence.length&&sequence.every((step,index)=>submitted[index]===step));
