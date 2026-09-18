@@ -111,6 +111,9 @@ export function ChallengeWorkbench({ level, selected, onAdd, onRemove, onReorder
           <div className="table-item sample-flask">
             <div className="flask-visual">
               <FlaskConical size={40} strokeWidth={1.5} />
+              <span className="flask-bubble b1" aria-hidden="true" />
+              <span className="flask-bubble b2" aria-hidden="true" />
+              <span className="flask-bubble b3" aria-hidden="true" />
             </div>
             <span className="flask-label">สารผสม</span>
             <div className="flask-tags">

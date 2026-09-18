@@ -145,15 +145,35 @@
   min-width: 110px;
 }
 .flask-visual {
+  position: relative;
   width: 68px;
   height: 68px;
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #e0f5f8, #b8e0e8);
-  box-shadow: 0 4px 12px rgba(14, 159, 173, .2), inset 0 -4px 8px rgba(0,0,0,.05);
+  background: radial-gradient(circle at 35% 35%, #e0f5f8 0%, #b8e0e8 70%, #9ad3dc 100%);
+  box-shadow: 0 4px 14px rgba(14, 159, 173, .25), inset 0 -4px 8px rgba(0,0,0,.08);
   color: var(--cyan);
+  overflow: hidden;
 }
+
+.flask-bubble {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.75);
+  pointer-events: none;
+  animation: bubble-float 2.2s infinite ease-in-out;
+}
+.flask-bubble.b1 { width: 7px; height: 7px; bottom: 10px; left: 22px; animation-delay: 0s; }
+.flask-bubble.b2 { width: 5px; height: 5px; bottom: 14px; right: 20px; animation-delay: 0.7s; }
+.flask-bubble.b3 { width: 9px; height: 9px; bottom: 6px; left: 32px; animation-delay: 1.3s; }
+
+@keyframes bubble-float {
+  0% { transform: translateY(0) scale(0.8); opacity: 0; }
+  40% { opacity: 0.9; }
+  100% { transform: translateY(-34px) scale(1.15); opacity: 0; }
+}
+
 .flask-label {
   color: var(--navy);
   font-weight: 800;
@@ -426,16 +446,111 @@
 .challenge-hint p { color: var(--muted); font-size: .88rem; }
 
 /* ── Success dialog ─────────────────────────────────── */
-.challenge-success { width: min(100%, 520px); max-height: calc(100vh - 36px); overflow: auto; padding: 30px; border-radius: 22px; background: #fff; text-align: center; box-shadow: 0 24px 80px rgba(0,0,0,.2); }
-.challenge-success-icon { display: grid; place-items: center; width: 74px; height: 74px; margin: 0 auto 14px; border-radius: 50%; background: #e0f7ed; color: #16815d; }
-.challenge-success h2 { margin: 3px 0; color: var(--navy); font-size: 1.8rem; }
-.challenge-earned { display: block; margin: 10px 0; color: #9b7000; font-size: 2rem; }
-.challenge-success > p:not(.eyebrow) { color: var(--muted); line-height: 1.6; }
-.separated-materials { margin: 20px 0; padding: 14px; border-radius: 12px; background: #f0f9fa; }
-.separated-materials > span { display: block; margin-bottom: 10px; color: var(--muted); }
-.separated-materials > div { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
-.separated-materials strong { padding: 8px 11px; border-radius: 9px; background: #fff; color: var(--navy); }
-.challenge-success > .primary-button { width: 100%; justify-content: center; }
+.challenge-success {
+  position: relative;
+  width: min(100%, 520px);
+  max-height: calc(100vh - 36px);
+  overflow: auto;
+  padding: 36px 30px 32px;
+  border-radius: 26px;
+  background: linear-gradient(180deg, #ffffff 0%, #f7fcfe 100%);
+  text-align: center;
+  box-shadow: 0 32px 90px rgba(10, 37, 64, 0.28), 0 0 0 1px rgba(14, 159, 173, 0.15);
+  animation: modal-pop 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modal-pop {
+  0% { transform: scale(0.92); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.challenge-success-icon {
+  display: grid;
+  place-items: center;
+  width: 82px;
+  height: 82px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  color: #15803d;
+  box-shadow: 0 8px 24px rgba(34, 197, 94, 0.25), 0 0 0 6px rgba(34, 197, 94, 0.1);
+  animation: bounce-icon 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes bounce-icon {
+  0% { transform: scale(0.6); }
+  60% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+.challenge-success h2 {
+  margin: 4px 0 2px;
+  color: var(--navy);
+  font-size: 1.95rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.challenge-earned {
+  display: inline-block;
+  margin: 12px 0;
+  padding: 6px 18px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 1.5px solid #f59e0b;
+  color: #b45309;
+  font-size: 1.85rem;
+  font-weight: 900;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.25);
+}
+
+.challenge-success > p:not(.eyebrow) {
+  color: var(--muted);
+  line-height: 1.65;
+  font-size: 0.98rem;
+}
+
+.separated-materials {
+  margin: 22px 0 26px;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid #d1fae5;
+  background: linear-gradient(180deg, #ecfdf5 0%, #f0fdf4 100%);
+}
+
+.separated-materials > span {
+  display: block;
+  margin-bottom: 10px;
+  color: #15803d;
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.separated-materials > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.separated-materials strong {
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: #ffffff;
+  color: var(--navy);
+  font-size: 0.92rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #bbf7d0;
+}
+
+.challenge-success > .primary-button {
+  width: 100%;
+  min-height: 52px;
+  font-size: 1.05rem;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--navy) 0%, #153e66 100%);
+  box-shadow: 0 8px 24px rgba(10, 37, 64, 0.22);
+}
 
 /* ── Confirm dialog ─────────────────────────────────── */
 .lab-confirm-skip { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; gap: 9px; border-radius: 12px; padding: 0 20px; border: 1px solid #e0a0a0; font-weight: 800; cursor: pointer; background: #fff5f5; color: #ad3030; }
