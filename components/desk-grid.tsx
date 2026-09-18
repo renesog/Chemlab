@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Hand, LockKeyhole, Sparkles, Unlock, UserCheck } from "lucide-react";
 import { Avatar } from "@/components/avatar";
 import type { Classroom, Desk } from "@/lib/types";
@@ -66,20 +67,68 @@ export function DeskGrid({
   room,
   onSelect,
   onLock,
+  onMoveStudent,
   selectedId,
 }: {
   room: Classroom;
   onSelect?: (id: string) => void;
   onLock?: (id: string, locked: boolean) => void;
+  onMoveStudent?: (studentId: string, toDeskId: string) => void;
   selectedId?: string;
 }) {
+  const [movingStudent, setMovingStudent] = useState<{ id: string; nickname: string; fromDeskId: string } | null>(null);
+
+  function handleTeacherDeskClick(desk: Desk) {
+    if (!onMoveStudent) return;
+    const student = room.students.find((s) => s.id === desk.occupantId);
+
+    // If already in move mode
+    if (movingStudent) {
+      // If clicking same desk or occupied desk, cancel or switch
+      if (desk.id === movingStudent.fromDeskId) {
+        setMovingStudent(null);
+        return;
+      }
+      if (student) {
+        // Switch to this new student instead
+        setMovingStudent({ id: student.id, nickname: student.nickname, fromDeskId: desk.id });
+        return;
+      }
+      // Target desk is empty! Move student here!
+      onMoveStudent(movingStudent.id, desk.id);
+      setMovingStudent(null);
+      return;
+    }
+
+    // If not in move mode and clicking a student, initiate move mode
+    if (student) {
+      setMovingStudent({ id: student.id, nickname: student.nickname, fromDeskId: desk.id });
+    }
+  }
+
   return (
     <div className={`desk-grid modern-desk-grid layout-${room.layout.toLowerCase()}`}>
+      {movingStudent && (
+        <div className="moving-student-banner">
+          <span>
+            กำลังย้าย <b>{movingStudent.nickname}</b> ➡️ แตะโต๊ะว่างที่ต้องการย้ายไป
+          </span>
+          <button
+            type="button"
+            className="moving-cancel-btn"
+            onClick={() => setMovingStudent(null)}
+          >
+            ยกเลิก
+          </button>
+        </div>
+      )}
+
       {room.desks.map((d) => {
         const state = deskState(d);
         const student = room.students.find((s) => s.id === d.occupantId);
-        const selected = selectedId === d.id;
+        const selected = selectedId === d.id || movingStudent?.fromDeskId === d.id;
         const handRaised = !!student?.handRaised;
+        const isMoveTarget = movingStudent && !d.occupantId && !d.locked;
 
         const className = [
           "desk",
@@ -87,30 +136,55 @@ export function DeskGrid({
           state.toLowerCase(),
           selected ? "selected-desk" : "",
           handRaised ? "hand-raised" : "",
+          isMoveTarget ? "move-target-desk" : "",
         ]
           .filter(Boolean)
           .join(" ");
 
         if (onLock) {
           return (
-            <article key={d.id} className={className} aria-label={`โต๊ะ ${d.label} ${labels[state]}`}>
+            <article
+              key={d.id}
+              className={className}
+              aria-label={`โต๊ะ ${d.label} ${labels[state]}`}
+              onClick={() => handleTeacherDeskClick(d)}
+              style={{ cursor: onMoveStudent ? "pointer" : "default" }}
+            >
               <div className="desk-surface">
                 <DeskContent desk={d} room={room} />
-                <button
-                  type="button"
-                  className={`desk-lock-action ${d.locked ? "unlock-action" : "lock-action"}`}
-                  onClick={() => onLock(d.id, !d.locked)}
-                >
-                  {d.locked ? (
-                    <>
-                      <Unlock size={14} /> ปลดล็อกโต๊ะนี้
-                    </>
-                  ) : (
-                    <>
-                      <LockKeyhole size={14} /> ล็อกโต๊ะนี้
-                    </>
+
+                {isMoveTarget && (
+                  <span className="move-target-indicator">
+                    แตะเพื่อย้ายมาโต๊ะนี้
+                  </span>
+                )}
+
+                <div className="teacher-desk-actions" onClick={(e) => e.stopPropagation()}>
+                  {student && onMoveStudent && !movingStudent && (
+                    <button
+                      type="button"
+                      className="desk-move-btn"
+                      onClick={() => setMovingStudent({ id: student.id, nickname: student.nickname, fromDeskId: d.id })}
+                    >
+                      ย้ายที่นั่ง
+                    </button>
                   )}
-                </button>
+                  <button
+                    type="button"
+                    className={`desk-lock-action ${d.locked ? "unlock-action" : "lock-action"}`}
+                    onClick={() => onLock(d.id, !d.locked)}
+                  >
+                    {d.locked ? (
+                      <>
+                        <Unlock size={14} /> ปลดล็อก
+                      </>
+                    ) : (
+                      <>
+                        <LockKeyhole size={14} /> ล็อก
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </article>
           );
