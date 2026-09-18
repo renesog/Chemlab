@@ -10,7 +10,9 @@ export default function TeacherClassroomsLayout({ children }: { children: React.
   const router = useRouter();
 
   useEffect(() => {
-    if (store.ready && !store.profile) {
+    if (!store.ready) return;
+    const saved = typeof window !== "undefined" ? localStorage.getItem("chemclass-teacher-profile") : null;
+    if (!store.profile && !saved) {
       router.replace("/teacher/login");
     }
   }, [store.ready, store.profile, router]);

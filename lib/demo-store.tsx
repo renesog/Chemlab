@@ -52,7 +52,13 @@ export function DemoProvider({children}:{children:React.ReactNode}){
   const [currentStudent,setCurrentStudent]=useState<Session|undefined>();
   const [tokens,setTokens]=useState<Record<string,string>>({});
   const [ownedRoomIds,setOwnedRoomIds]=useState<string[]>([]);
-  const [profile,setProfile]=useState<TeacherProfile|null>(null);
+  const [profile,setProfile]=useState<TeacherProfile|null>(()=>{
+    if(typeof window==="undefined")return null;
+    try{
+      const saved=localStorage.getItem("chemclass-teacher-profile");
+      return saved?JSON.parse(saved):null;
+    }catch{return null;}
+  });
   const [ready,setReady]=useState(false);
   const [error,setError]=useState("");
   const putRoom=useCallback((room:Classroom)=>setRooms(previous=>{const current=previous.find(item=>item.id===room.id);if(current&&JSON.stringify(current)===JSON.stringify(room))return previous;return[room,...previous.filter(item=>item.id!==room.id)]}),[]);
