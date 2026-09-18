@@ -1,8 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { findRoom, json, parseRoom, rateAllowed } from "@/db/live-rooms";
-import { clientDb } from "@/lib/firebase/config";
-import { doc, setDoc } from "firebase/firestore";
+import { adminDb } from "@/lib/firebase/admin";
 import type { Classroom } from "@/lib/types";
 import { getTeacherUser } from "@/lib/auth";
 import { findTeacherProfile } from "@/db/teacher-profiles";
@@ -30,7 +29,7 @@ export async function POST(request: Request) {
       return json({ room: parseRoom(existing), teacherToken: existing.teacherToken, published: true });
     }
     const teacherToken = crypto.randomUUID() + crypto.randomUUID();
-    await setDoc(doc(clientDb, 'rooms', room.id), {
+    await adminDb.collection('rooms').doc(room.id).set({
       id: room.id,
       code: room.code,
       snapshot: JSON.stringify(room),

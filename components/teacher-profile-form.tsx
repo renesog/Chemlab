@@ -4,7 +4,7 @@ import type { TeacherProfile } from "@/lib/types";
 import { Atom, BookOpen, FlaskConical } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
-import { getStoredTeacherId } from "@/lib/demo-store";
+import { getStoredTeacherId, useDemo } from "@/lib/demo-store";
 
 const icons = [
   { id: "flask", label: "ขวดทดลอง", Icon: FlaskConical },

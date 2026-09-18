@@ -17,7 +17,7 @@ function desks(count=12){return Array.from({length:count},(_,i)=>({id:`desk-${i+
 const seed:Classroom[]=[];
 function normalizeRooms(value:Classroom[]){return value.map(room=>({...room,activity:room.activity??defaultActivity,students:room.students.map(student=>({...student,avatar:{...defaultAvatar,...student.avatar}}))}))}
 type Session={roomId:string;studentId:string;token?:string};
-type Store={ready:boolean;rooms:Classroom[];profile:TeacherProfile|null;currentStudent?:Session;error:string;canManage(roomId:string):boolean;teacherToken(roomId:string):string|undefined;createRoom(input:{name:string;subject:string;count:number;layout:Classroom["layout"]}):Promise<Classroom>;deleteRoom(roomId:string):Promise<void>;join(code:string,nickname:string):Promise<{room:Classroom;student:Student}|null>;updateAvatar(avatar:Avatar):Promise<void>;selectDesk(deskId:string):Promise<{ok:boolean;message:string}>;toggleHand():Promise<void>;getHint(levelId:number):Promise<string>;setRoomStatus(roomId:string,status:Classroom["status"]):Promise<void>;configureActivity(roomId:string,activity:ActivityConfig):Promise<void>;setDeskLock(roomId:string,deskId:string,locked:boolean):Promise<void>;setAllLocks(roomId:string,locked:boolean):Promise<void>;moveStudent(roomId:string,studentId:string,deskId:string):Promise<void>;submitAttempt(levelId:number,steps:string[]):Promise<{correct:boolean;feedback:string;score:number;explanation:string}>;skipLevel(levelId:number):Promise<void>};
+type Store={ready:boolean;rooms:Classroom[];profile:TeacherProfile|null;currentStudent?:Session;error:string;canManage(roomId:string):boolean;teacherToken(roomId:string):string|undefined;createRoom(input:{name:string;subject:string;count:number;layout:Classroom["layout"]}):Promise<Classroom>;deleteRoom(roomId:string):Promise<void>;join(code:string,nickname:string):Promise<{room:Classroom;student:Student}|null>;updateAvatar(avatar:Avatar):Promise<void>;selectDesk(deskId:string):Promise<{ok:boolean;message:string}>;toggleHand():Promise<void>;getHint(levelId:number):Promise<string>;setRoomStatus(roomId:string,status:Classroom["status"]):Promise<void>;configureActivity(roomId:string,activity:ActivityConfig):Promise<void>;setDeskLock(roomId:string,deskId:string,locked:boolean):Promise<void>;setAllLocks(roomId:string,locked:boolean):Promise<void>;moveStudent(roomId:string,studentId:string,deskId:string):Promise<void>;submitAttempt(levelId:number,steps:string[]):Promise<{correct:boolean;feedback:string;score:number;explanation:string}>;skipLevel(levelId:number):Promise<void>;saveProfile(profile:TeacherProfile):void};
 const Context=createContext<Store|null>(null);
 class RequestFailure extends Error{constructor(message:string,readonly status:number){super(message)}}
 const TEACHER_ID_KEY="chemclass-teacher-id";
@@ -61,6 +61,8 @@ export function DemoProvider({children}:{children:React.ReactNode}){
     try{
       const saved=localStorage.getItem(KEY);if(saved)setRooms(normalizeRooms(JSON.parse(saved)));
       const teacher=localStorage.getItem(TEACHERS);if(teacher)setTokens(JSON.parse(teacher));
+      const savedProf=localStorage.getItem("chemclass-teacher-profile");
+      if(savedProf){try{setProfile(JSON.parse(savedProf))}catch{}}
       const storedSession=localStorage.getItem(SESSION);if(storedSession)session=JSON.parse(storedSession) as Session;
       if(session?.roomId&&session.studentId&&session.token){
         const data=await request<{room:Classroom}>(`/api/rooms/${encodeURIComponent(session.roomId)}`,"PATCH",{action:"resume",token:session.token});
@@ -82,7 +84,15 @@ export function DemoProvider({children}:{children:React.ReactNode}){
     if(!ready||!pathname?.startsWith("/teacher/")||pathname==="/teacher/login")return;
     let cancelled=false;
     const fetchTeacherData=()=>{
-      void Promise.all([request<{profile:TeacherProfile|null}>("/api/teacher/profile"),request<{rooms:Classroom[]}>("/api/teacher/rooms")]).then(([account,owned])=>{if(cancelled)return;setProfile(account.profile);setOwnedRoomIds(owned.rooms.map(room=>room.id));owned.rooms.forEach(putRoom)}).catch(()=>{});
+      void Promise.all([request<{profile:TeacherProfile|null}>("/api/teacher/profile"),request<{rooms:Classroom[]}>("/api/teacher/rooms")]).then(([account,owned])=>{
+        if(cancelled)return;
+        if(account.profile){
+          setProfile(account.profile);
+          try{localStorage.setItem("chemclass-teacher-profile",JSON.stringify(account.profile))}catch{}
+        }
+        setOwnedRoomIds(owned.rooms.map(room=>room.id));
+        owned.rooms.forEach(putRoom);
+      }).catch(()=>{});
     };
     fetchTeacherData();
     const unsubAuth=onAuthStateChanged(auth,(user)=>{if(user)fetchTeacherData();});
@@ -156,7 +166,11 @@ export function DemoProvider({children}:{children:React.ReactNode}){
   const moveStudent=(roomId:string,studentId:string,deskId:string)=>teacherAction(roomId,"moveStudent",{studentId,deskId});
   const submitAttempt:Store["submitAttempt"]=async(levelId,steps)=>{if(!currentStudent?.token)throw new Error("กรุณาสแกน QR เข้าห้องอีกครั้ง");const data=await request<{room:Classroom;correct:boolean;feedback:string;score:number;explanation:string}>(`/api/rooms/${currentStudent.roomId}`,"PATCH",{action:"attempt",token:currentStudent.token,levelId,steps});putRoom(data.room);return data};
   const skipLevel:Store["skipLevel"]=async levelId=>{if(!currentStudent?.token)throw new Error("กรุณาสแกน QR เข้าห้องอีกครั้ง");const data=await request<{room:Classroom}>(`/api/rooms/${currentStudent.roomId}`,"PATCH",{action:"skip",token:currentStudent.token,levelId});putRoom(data.room)};
-  const value={ready,rooms,profile,currentStudent,error,canManage:(roomId:string)=>!!tokens[roomId]||ownedRoomIds.includes(roomId),teacherToken:(roomId:string)=>tokens[roomId],createRoom,deleteRoom,join,updateAvatar,selectDesk,toggleHand,getHint,setRoomStatus,configureActivity,setDeskLock,setAllLocks,moveStudent,submitAttempt,skipLevel};
+  const saveProfile:Store["saveProfile"]=useCallback(profile=>{
+    setProfile(profile);
+    try{localStorage.setItem("chemclass-teacher-profile",JSON.stringify(profile))}catch{}
+  },[]);
+  const value={ready,rooms,profile,currentStudent,error,canManage:(roomId:string)=>!!tokens[roomId]||ownedRoomIds.includes(roomId),teacherToken:(roomId:string)=>tokens[roomId],createRoom,deleteRoom,join,updateAvatar,selectDesk,toggleHand,getHint,setRoomStatus,configureActivity,setDeskLock,setAllLocks,moveStudent,submitAttempt,skipLevel,saveProfile};
   return <Context.Provider value={value}><WebMcpTools/>{children}</Context.Provider>;
 }
 export function useDemo(){const value=useContext(Context);if(!value)throw new Error("DemoProvider missing");return value}

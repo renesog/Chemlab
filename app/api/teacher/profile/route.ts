@@ -2,8 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { getTeacherUser } from "@/lib/auth";
 import { json, rateAllowed } from "@/db/live-rooms";
-import { clientDb } from "@/lib/firebase/config";
-import { doc, setDoc } from "firebase/firestore";
+import { adminDb } from "@/lib/firebase/admin";
 import { findTeacherProfile, validTeacherProfile } from "@/db/teacher-profiles";
 
 export async function GET() {
@@ -29,7 +28,7 @@ export async function PUT(request: Request) {
     
     const profile = { ...body, nickname: body.nickname.trim() };
     const now = Date.now();
-    await setDoc(doc(clientDb, 'teacherProfiles', user.userId), {
+    await adminDb.collection('teacherProfiles').doc(user.userId).set({
       nickname: profile.nickname,
       avatar: profile.avatar,
       color: profile.color,

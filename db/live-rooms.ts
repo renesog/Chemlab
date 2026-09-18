@@ -1,8 +1,5 @@
-import { clientDb } from '@/lib/firebase/config';
-import { 
-  collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, 
-  query, where, limit, runTransaction, increment, type DocumentReference 
-} from 'firebase/firestore';
+import { adminDb } from '@/lib/firebase/admin';
+import { FieldValue, type DocumentReference } from 'firebase-admin/firestore';
 import type { Classroom } from '@/lib/types';
 
 type RoomDoc = {
@@ -17,14 +14,14 @@ type RoomDoc = {
 
 export async function findRoom(key: string): Promise<(RoomDoc & { _ref: DocumentReference }) | null> {
   try {
-    const docRef = doc(clientDb, 'rooms', key);
-    const byId = await getDoc(docRef);
-    if (byId.exists()) {
+    const docRef = adminDb.collection('rooms').doc(key);
+    const byId = await docRef.get();
+    if (byId.exists) {
       return { ...(byId.data() as RoomDoc), _ref: byId.ref };
     }
 
-    const q = query(collection(clientDb, 'rooms'), where('code', '==', key.toUpperCase()), limit(1));
-    const snap = await getDocs(q);
+    const q = adminDb.collection('rooms').where('code', '==', key.toUpperCase()).limit(1);
+    const snap = await q.get();
     if (!snap.empty) {
       const d = snap.docs[0];
       return { ...(d.data() as RoomDoc), _ref: d.ref };
@@ -47,14 +44,14 @@ export async function mutateRoom(
   const found = await findRoom(key);
   if (!found) return null;
 
-  const result = await runTransaction(clientDb, async (tx) => {
+  const result = await adminDb.runTransaction(async (tx) => {
     const freshSnap = await tx.get(found._ref);
-    if (!freshSnap.exists()) throw new Error('room_not_found');
+    if (!freshSnap.exists) throw new Error('room_not_found');
     const row = freshSnap.data() as RoomDoc;
     const room = await mutate(parseRoom(row), row);
     tx.update(found._ref, {
       snapshot: JSON.stringify(room),
-      version: increment(1),
+      version: FieldValue.increment(1),
       updatedAt: Date.now(),
     });
     return room;
@@ -69,12 +66,12 @@ export function json(data: unknown, status = 200) {
 
 export async function rateAllowed(key: string, limitCount: number): Promise<boolean> {
   const now = Date.now();
-  const ref = doc(clientDb, 'rateLimits', key.replace(/\//g, '_'));
+  const ref = adminDb.collection('rateLimits').doc(key.replace(/\//g, '_'));
 
   try {
-    const result = await runTransaction(clientDb, async (tx) => {
+    const result = await adminDb.runTransaction(async (tx) => {
       const snap = await tx.get(ref);
-      if (!snap.exists() || (snap.data()?.resetAt ?? 0) <= now) {
+      if (!snap.exists || (snap.data()?.resetAt ?? 0) <= now) {
         tx.set(ref, { count: 1, resetAt: now + 60_000 });
         return 1;
       }
@@ -90,5 +87,5 @@ export async function rateAllowed(key: string, limitCount: number): Promise<bool
 }
 
 export function database() {
-  return clientDb;
+  return adminDb;
 }

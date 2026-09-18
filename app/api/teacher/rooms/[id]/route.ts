@@ -2,8 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { getTeacherUser } from "@/lib/auth";
 import { findRoom, json } from "@/db/live-rooms";
-import { clientDb } from "@/lib/firebase/config";
-import { doc, deleteDoc } from "firebase/firestore";
+import { adminDb } from "@/lib/firebase/admin";
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -16,7 +15,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     const legacy = !room.ownerUserId && request.headers.get("x-teacher-token") === room.teacherToken;
     if (!owned && !legacy) return json({ error: "คุณไม่มีสิทธิ์ลบห้องนี้" }, 403);
     
-    await deleteDoc(doc(clientDb, 'rooms', id));
+    await adminDb.collection('rooms').doc(id).delete();
     return json({ deleted: true });
   } catch (err: unknown) {
     console.error("DELETE /api/teacher/rooms/[id] error:", err);

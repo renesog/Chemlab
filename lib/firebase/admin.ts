@@ -1,7 +1,6 @@
 import { initializeApp, getApps, cert, type ServiceAccount, type App } from 'firebase-admin/app';
 import { getAuth, type Auth } from 'firebase-admin/auth';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
-import { clientDb } from './config';
 
 let _app: App | null = null;
 let _auth: Auth | null = null;
@@ -37,11 +36,14 @@ export function getAdminAuth(): Auth | null {
 
 export function getAdminDb(): Firestore {
   const app = getAdminApp();
-  if (app) {
-    if (!_db) _db = getFirestore(app);
-    return _db;
+  if (!app) {
+    throw new Error(
+      "FIREBASE_SERVICE_ACCOUNT_KEY ยังไม่ได้ตั้งค่าใน Environment Variables ของเซิร์ฟเวอร์ " +
+      "— ใส่ไฟล์ Service Account JSON (Project Settings > Service accounts > Generate new private key) แล้ว redeploy"
+    );
   }
-  return clientDb as unknown as Firestore;
+  if (!_db) _db = getFirestore(app);
+  return _db;
 }
 
 export const adminAuth = new Proxy({} as Auth, {

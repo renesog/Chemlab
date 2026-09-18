@@ -1,11 +1,10 @@
-import { clientDb } from '@/lib/firebase/config';
-import { doc, getDoc } from 'firebase/firestore';
+import { adminDb } from '@/lib/firebase/admin';
 import type { TeacherProfile } from '@/lib/types';
 
 export async function findTeacherProfile(userId: string): Promise<TeacherProfile | null> {
   try {
-    const snap = await getDoc(doc(clientDb, 'teacherProfiles', userId));
-    if (!snap.exists()) return null;
+    const snap = await adminDb.collection('teacherProfiles').doc(userId).get();
+    if (!snap.exists) return null;
     const data = snap.data()!;
     return {
       nickname: data.nickname,

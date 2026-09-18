@@ -1,11 +1,10 @@
-import { clientDb } from '@/lib/firebase/config';
-import { doc, getDoc } from 'firebase/firestore';
+import { adminDb } from '@/lib/firebase/admin';
 import type { PrivateQuestionKeys } from '@/lib/custom-questions';
 
 export async function findQuestionKeys(roomId: string): Promise<PrivateQuestionKeys> {
   try {
-    const snap = await getDoc(doc(clientDb, 'rooms', roomId, 'answerKeys', roomId));
-    if (!snap.exists()) return {};
+    const snap = await adminDb.collection('rooms').doc(roomId).collection('answerKeys').doc(roomId).get();
+    if (!snap.exists) return {};
     const data = snap.data()!;
     return (data.answersJson ? JSON.parse(data.answersJson) : {}) as PrivateQuestionKeys;
   } catch (err) {

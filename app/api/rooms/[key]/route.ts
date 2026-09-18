@@ -1,7 +1,6 @@
 export const dynamic = "force-dynamic";
 import { findRoom, json, mutateRoom, parseRoom, rateAllowed } from "@/db/live-rooms";
-import { clientDb } from "@/lib/firebase/config";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { adminDb } from "@/lib/firebase/admin";
 import type { ActivityConfig, Avatar, Classroom, Student } from "@/lib/types";
 import { explanationFor, scoreForAttempts, scoreForCustomAttempts, validateSequence } from "@/lib/game";
 import { getTeacherUser } from "@/lib/auth";
@@ -32,7 +31,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ ke
     const token = crypto.randomUUID() + crypto.randomUUID();
     const room = await mutateRoom(row.id, current => { if (current.status === "ENDED") throw new Error("room_ended"); return { ...current, students: [...current.students, student] }; });
     try {
-      await setDoc(doc(clientDb, 'rooms', row.id, 'studentTokens', token), { studentId: student.id, createdAt: Date.now() });
+      await adminDb.collection('rooms').doc(row.id).collection('studentTokens').doc(token).set({ studentId: student.id, createdAt: Date.now() });
     } catch {}
     return json({ room, student, token });
   }
@@ -41,8 +40,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ ke
   let session: { student_id: string } | null = null;
   if (body.token) {
     try {
-      const tokenDoc = await getDoc(doc(clientDb, 'rooms', row.id, 'studentTokens', body.token));
-      if (tokenDoc.exists()) {
+      const tokenDoc = await adminDb.collection('rooms').doc(row.id).collection('studentTokens').doc(body.token).get();
+      if (tokenDoc.exists) {
         session = { student_id: tokenDoc.data()!.studentId };
       }
     } catch {}
