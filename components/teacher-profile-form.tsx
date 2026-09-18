@@ -37,6 +37,7 @@ export function TeacherProfileForm({
   submitLabel: string;
 }) {
   const router = useRouter();
+  const store = useDemo();
   const [draft, setDraft] = useState<TeacherProfile>(
     initial ?? { nickname: "", avatar: "flask", color: "cyan" }
   );
@@ -66,6 +67,7 @@ export function TeacherProfileForm({
         throw new Error(text || `เซิร์ฟเวอร์ตอบกลับรหัส ${response.status}`);
       }
       if (!response.ok) throw new Error(data.error ?? "บันทึกโปรไฟล์ไม่สำเร็จ");
+      store.saveProfile(draft);
       router.push("/teacher/dashboard");
       router.refresh();
     } catch (cause) {
