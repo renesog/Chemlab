@@ -1117,3 +1117,44 @@ body{font-size:16px;line-height:1.55;background:linear-gradient(180deg,#f8fbfd 0
 .teacher-live .session-pending { color:var(--muted); font-size:.78rem; grid-column:1/-1; }
 .teacher-live .activity-plan-actions .secondary-button:first-child { color:#076c77; border-color:#a9d9df; background:#f0fafb; }
 @media(prefers-reduced-motion:reduce) { .teacher-live .board-live i { animation:none; } }
+
+/* Shared teacher/student countdown, driven by the server start time. */
+.game-countdown { background:#071d30; display:grid; grid-template-rows:auto minmax(0,1fr) auto; gap:16px; padding:24px 32px; overflow-y:auto; overscroll-behavior:contain; isolation:isolate; }
+.countdown-brand { display:flex; align-items:center; justify-content:center; gap:9px; color:#c9e2eb; font-size:.85rem; font-weight:700; }
+.countdown-brand>svg { color:#59d8df; }
+.countdown-live { margin-left:8px; padding:4px 9px; border:1px solid #285361; border-radius:6px; color:#79e4bf; font-size:.7rem; font-weight:500; }
+.countdown-stage { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:12px 0; }
+.countdown-kicker { display:flex; align-items:center; gap:7px; color:#6bdce5; font-size:.85rem; font-weight:600; }
+.countdown-title { max-width:700px; margin:10px 0 20px; font-size:clamp(1.4rem,3.5vw,2.2rem); line-height:1.4; font-weight:700; overflow-wrap:anywhere; color:#fff; }
+.countdown-dial { position:relative; width:clamp(210px,30vh,300px); aspect-ratio:1; flex-shrink:0; }
+.countdown-dial>svg { position:absolute; inset:0; width:100%; height:100%; transform:rotate(-90deg); }
+.countdown-dial circle { fill:none; stroke-width:4; }
+.countdown-track { stroke:#1b4051; }
+.countdown-ring { stroke:#54d7dd; stroke-linecap:round; transition:stroke-dashoffset 200ms linear; }
+.countdown-dial:before { content:""; position:absolute; inset:20px; border:1px solid #214654; border-radius:50%; background:#0d2a3e; }
+.countdown-dial-copy { position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:12px; animation:countdown-beat 350ms ease-out; }
+.countdown-dial-copy strong { font-size:clamp(3rem,8vw,4.3rem); line-height:1.15; color:#fff; letter-spacing:-.04em; }
+.is-counting .countdown-dial-copy strong { font-size:clamp(5rem,12vw,7.5rem); font-variant-numeric:tabular-nums; }
+.countdown-dial-copy span { color:#97c4d1; font-size:.73rem; }
+.countdown-steps { display:flex; align-items:center; justify-content:center; gap:10px; margin:18px 0 4px; }
+.countdown-steps span { display:grid; place-items:center; width:32px; height:32px; border-radius:8px; border:1px solid #2b4e60; color:#799bab; font-weight:700; font-size:.9rem; transition:background 180ms,color 180ms; }
+.countdown-steps .is-active { background:#54d7dd; border-color:#54d7dd; color:#071d30; }
+.countdown-caption { color:#d4e8ee; font-size:.9rem; line-height:1.6; margin:16px 0; }
+.countdown-info { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:12px; color:#94b6c4; font-size:.8rem; }
+.countdown-info span { display:flex; align-items:center; gap:7px; }
+.countdown-info>i { width:3px; height:3px; background:#456e80; border-radius:50%; }
+.countdown-room { display:flex; justify-content:center; align-items:center; flex-wrap:wrap; gap:8px; color:#90b4c5; font-size:.8rem; padding:8px; }
+.countdown-room strong { color:#e5f4f7; font-family:ui-monospace,Consolas,monospace; letter-spacing:.14em; }
+.countdown-room>span { flex-basis:100%; color:#789daf; font-size:.72rem; }
+.countdown-decor { position:absolute; inset:0; z-index:-1; overflow:hidden; pointer-events:none; }
+.countdown-decor i { position:absolute; width:36px; height:36px; border:2px solid #245666; border-radius:9px; transform:rotate(-18deg); }
+.countdown-decor i:nth-child(1) { top:18%; left:12%; width:70px; height:70px; border-color:#1c4957; }
+.countdown-decor i:nth-child(2) { top:24%; right:15%; border-radius:50%; border-color:#387386; }
+.countdown-decor i:nth-child(3) { bottom:24%; left:20%; width:18px; height:18px; background:#54d7dd; border:0; }
+.countdown-decor i:nth-child(4) { bottom:19%; right:11%; width:60px; height:60px; border-color:#6a572c; transform:rotate(24deg); }
+.countdown-decor i:nth-child(5) { top:48%; left:6%; width:9px; height:9px; border:0; background:#bd9750; border-radius:50%; }
+.countdown-decor i:nth-child(6) { top:51%; right:7%; width:13px; height:13px; border:0; background:#386174; border-radius:50%; }
+@keyframes countdown-beat { from { opacity:.65; transform:scale(.85); } to { opacity:1; transform:scale(1); } }
+@media(max-width:650px) { .game-countdown { padding:20px 16px; gap:8px; } .countdown-title { margin-bottom:16px; } .countdown-caption { font-size:.82rem; } .countdown-decor i:nth-child(1) { left:-25px; } .countdown-decor i:nth-child(4) { right:-20px; } }
+@media(max-height:600px) and (min-width:650px) { .game-countdown { padding:12px 24px; gap:4px; } .countdown-title { font-size:1.3rem; margin:6px 0 8px; } .countdown-dial { width:170px; } .countdown-dial-copy strong { font-size:2.6rem; } .is-counting .countdown-dial-copy strong { font-size:4.4rem; } .countdown-dial-copy span { font-size:.62rem; } .countdown-steps { margin-top:8px; } .countdown-caption { margin:8px 0; } }
+@media(prefers-reduced-motion:reduce) { .game-countdown * { animation:none!important; transition:none!important; } }
