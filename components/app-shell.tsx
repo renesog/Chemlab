@@ -1,22 +1,33 @@
 "use client";
 
-import { ArrowLeft, FlaskConical, Home, LogOut, Wifi, Sparkles } from "lucide-react";
+import { ArrowLeft, FlaskConical, Home, LogOut, Wifi, WifiOff } from "lucide-react";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 export function AppShell({
   children,
   title,
   back,
+  compact = false,
 }: {
   children: React.ReactNode;
   title: string;
   back?: string;
+  compact?: boolean;
 }) {
   const router = useRouter();
   const path = usePathname();
+  const [online, setOnline] = useState(true);
+  useEffect(() => {
+    const update = () => setOnline(navigator.onLine);
+    update();
+    window.addEventListener("online", update);
+    window.addEventListener("offline", update);
+    return () => { window.removeEventListener("online", update); window.removeEventListener("offline", update); };
+  }, []);
 
   return (
-    <div className="app-page modern-app-shell">
+    <div className={`app-page modern-app-shell${compact ? " classroom-app" : ""}`}>
       <a className="skip-link" href="#main-content">
         ข้ามไปยังเนื้อหาหลัก
       </a>
@@ -48,10 +59,10 @@ export function AppShell({
           </button>
         </div>
 
-        <div className="header-status modern-status-pill">
+        <div className={`header-status modern-status-pill${online ? "" : " is-offline"}`} role="status" title={online ? "เชื่อมต่อเซิร์ฟเวอร์เรียลไทม์" : "การเชื่อมต่อขาดหาย กำลังรอเครือข่าย"}>
           <span className="live-pulse-dot" aria-hidden="true" />
-          <Wifi size={15} />
-          <span>เชื่อมต่อเซิร์ฟเวอร์เรียลไทม์</span>
+          {online ? <Wifi size={15} /> : <WifiOff size={15} />}
+          <span>{online ? compact ? "เชื่อมต่อแล้ว" : "เชื่อมต่อเซิร์ฟเวอร์เรียลไทม์" : "การเชื่อมต่อขาดหาย"}</span>
         </div>
       </header>
 

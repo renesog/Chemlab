@@ -447,10 +447,16 @@
 
 /* ── Success dialog ─────────────────────────────────── */
 .challenge-success {
-  position: relative;
-  width: min(100%, 520px);
-  max-height: calc(100vh - 36px);
+  /* Keep the result in the viewport while Radix locks background scrolling. */
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  width: min(calc(100vw - 32px), 520px);
+  max-height: calc(100dvh - 32px);
   overflow: auto;
+  overscroll-behavior: contain;
+  grid-auto-rows: max-content;
   padding: 36px 30px 32px;
   border-radius: 26px;
   background: linear-gradient(180deg, #ffffff 0%, #f7fcfe 100%);
@@ -544,6 +550,8 @@
 }
 
 .challenge-success > .primary-button {
+  position: sticky;
+  bottom: 0;
   width: 100%;
   min-height: 52px;
   font-size: 1.05rem;

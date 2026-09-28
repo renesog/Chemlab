@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./challenge.css";
+import "./virtual-lab.css";
 import "./teacher-account.css";
 import "./question-builder.css";
 import { DemoProvider } from "@/lib/demo-store";

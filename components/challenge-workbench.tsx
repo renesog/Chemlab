@@ -1,206 +1,29 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import type { PublicLevel } from "@/lib/levels";
-import {
-  ArrowDown, ArrowRight, ArrowUp, Beaker, Droplets, FileText, Flame,
-  FlaskConical, GripVertical, Magnet, Package, ScanSearch, Snowflake,
-  Trash2, X, ShieldCheck, Atom,
-} from "lucide-react";
-import { type DragEvent, useCallback, useRef, useState } from "react";
+import { ArrowDown, ArrowUp, Beaker, Droplets, FileText, Flame, FlaskConical, Magnet, Package, ScanSearch, Snowflake, Trash2, X } from "lucide-react";
 
-/* ── Icon resolver ─────────────────────────────────────────── */
+const LabScene3D = dynamic(() => import("./lab-scene-3d"), { ssr: false, loading: () => <div className="virtual-lab-loading" role="status">กำลังเปิดห้องแล็บ 3 มิติ…</div> });
 
 export function ToolIcon({ id, size = 22 }: { id: string; size?: number }) {
-  const Icon = id.includes("magnet")
-    ? Magnet
-    : /sieve/.test(id)
-    ? ScanSearch
-    : /paper|filter/.test(id)
-    ? FileText
-    : /receiver|beaker/.test(id)
-    ? Beaker
-    : /water|pour|stir|dissolve|drain|settle/.test(id)
-    ? Droplets
-    : /heat|evaporate|sublime|dish/.test(id)
-    ? Flame
-    : /collect/.test(id)
-    ? Package
-    : /cool/.test(id)
-    ? Snowflake
-    : /remove/.test(id)
-    ? Trash2
-    : FlaskConical;
-  return <Icon size={size} aria-hidden="true" />;
+  const Icon = id.includes("magnet") ? Magnet : /sieve/.test(id) ? ScanSearch : /paper|filter/.test(id) ? FileText : /receiver|beaker/.test(id) ? Beaker : /water|pour|stir|dissolve|drain|settle/.test(id) ? Droplets : /heat|evaporate|sublime|dish/.test(id) ? Flame : /collect/.test(id) ? Package : /cool/.test(id) ? Snowflake : /remove/.test(id) ? Trash2 : FlaskConical;
+  return <Icon size={size} aria-hidden="true"/>;
 }
 
-/* ── Lab Room ──────────────────────────────────────────────── */
+type BenchProps = { level: PublicLevel; selected: string[]; onAdd: (id: string) => void; onRemove: (id: string) => void; onReorder: (from: number, to: number) => void; busy?: boolean };
 
-interface BenchProps {
-  level: PublicLevel;
-  selected: string[];
-  onAdd: (id: string) => void;
-  onRemove: (id: string) => void;
-  onReorder: (from: number, to: number) => void;
-}
-
-export function ChallengeWorkbench({ level, selected, onAdd, onRemove, onReorder }: BenchProps) {
-  const materials = level.mixture.split(/\s*\+\s*/);
-  const [dragOverSlot, setDragOverSlot] = useState<number | null>(null);
-  const [reorderFrom, setReorderFrom] = useState<number | null>(null);
-
-  /* Drop from shelf → add to bench end */
-  const handleDrop = useCallback(
-    (event: DragEvent<HTMLDivElement>) => {
-      event.preventDefault();
-      setDragOverSlot(null);
-      const id = event.dataTransfer.getData("equipment-id");
-      if (id && level.equipment.some((item) => item.id === id)) {
-        onAdd(id);
-      }
-    },
-    [level.equipment, onAdd],
-  );
-
-  /* Drop for reorder within bench */
-  const handleSlotDrop = useCallback(
-    (event: DragEvent<HTMLDivElement>, targetIndex: number) => {
-      event.preventDefault();
-      event.stopPropagation();
-      setDragOverSlot(null);
-
-      const equipId = event.dataTransfer.getData("equipment-id");
-      const reorderIdx = event.dataTransfer.getData("reorder-index");
-
-      if (reorderIdx !== "") {
-        const fromIdx = parseInt(reorderIdx, 10);
-        if (fromIdx !== targetIndex) onReorder(fromIdx, targetIndex);
-      } else if (equipId && level.equipment.some((item) => item.id === equipId)) {
-        onAdd(equipId);
-      }
-    },
-    [level.equipment, onAdd, onReorder],
-  );
-
-  return (
-    <div className="lab-room" aria-label="ห้องทดลอง">
-      {/* ── Lab wall decorations ── */}
-      <div className="lab-wall">
-        <div className="wall-decor wall-decor-left">
-          <Atom size={16} />
-          <span>Lab</span>
-        </div>
-        <div className="wall-decor wall-decor-right">
-          <ShieldCheck size={14} />
-          <span>Safety First</span>
-        </div>
-        <div className="lab-window">
-          <div className="window-glass" />
-          <div className="window-glass" />
-        </div>
-      </div>
-
-      {/* ── Lab bench (table) ── */}
-      <div className="lab-table">
-        <div className="table-edge-back" />
-        <div
-          className="table-surface"
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={handleDrop}
-        >
-          {/* Sample flask */}
-          <div className="table-item sample-flask">
-            <div className="flask-visual">
-              <FlaskConical size={40} strokeWidth={1.5} />
-              <span className="flask-bubble b1" aria-hidden="true" />
-              <span className="flask-bubble b2" aria-hidden="true" />
-              <span className="flask-bubble b3" aria-hidden="true" />
-            </div>
-            <span className="flask-label">สารผสม</span>
-            <div className="flask-tags">
-              {materials.map((name, i) => (
-                <span key={`${i}-${name}`}>{name.trim()}</span>
-              ))}
-            </div>
-          </div>
-
-          {/* Steps placed on bench */}
-          {selected.map((id, index) => {
-            const item = level.equipment.find((e) => e.id === id);
-            if (!item) return null;
-            return (
-              <div key={`step-${id}`} className="table-step-group">
-                <div className="table-arrow" aria-hidden="true">
-                  <ArrowRight className="arrow-h" size={20} />
-                  <ArrowDown className="arrow-v" size={20} />
-                </div>
-                <div
-                  className={`table-slot filled ${dragOverSlot === index ? "drag-over" : ""}`}
-                  draggable
-                  onDragStart={(e) => {
-                    e.dataTransfer.setData("reorder-index", String(index));
-                    e.dataTransfer.effectAllowed = "move";
-                    setReorderFrom(index);
-                  }}
-                  onDragEnd={() => setReorderFrom(null)}
-                  onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setDragOverSlot(index); }}
-                  onDragLeave={() => setDragOverSlot(null)}
-                  onDrop={(e) => handleSlotDrop(e, index)}
-                >
-                  <span className="slot-num">{index + 1}</span>
-                  <ToolIcon id={item.id} size={28} />
-                  <span className="slot-name">{item.label}</span>
-                  <div className="slot-controls">
-                    <button onClick={() => { if (index > 0) onReorder(index, index - 1); }} disabled={index === 0} aria-label="ขึ้น"><ArrowUp size={13} /></button>
-                    <button onClick={() => { if (index < selected.length - 1) onReorder(index, index + 1); }} disabled={index === selected.length - 1} aria-label="ลง"><ArrowDown size={13} /></button>
-                    <button className="ctrl-remove" onClick={() => onRemove(id)} aria-label="ลบ"><X size={13} /></button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-
-          {/* Empty drop zone */}
-          <div className="table-step-group">
-            <div className="table-arrow" aria-hidden="true">
-              <ArrowRight className="arrow-h" size={20} />
-              <ArrowDown className="arrow-v" size={20} />
-            </div>
-            <div
-              className={`table-slot empty-slot ${dragOverSlot === -1 ? "drag-over" : ""}`}
-              onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setDragOverSlot(-1); }}
-              onDragLeave={() => setDragOverSlot(null)}
-              onDrop={(e) => {
-                e.preventDefault(); e.stopPropagation(); setDragOverSlot(null);
-                const id = e.dataTransfer.getData("equipment-id");
-                if (id && level.equipment.some((item) => item.id === id)) onAdd(id);
-              }}
-            >
-              <span className="slot-num empty-num">{selected.length + 1}</span>
-              <span className="slot-hint">{selected.length === 0 ? "ลากอุปกรณ์มาวาง" : "เพิ่มขั้นตอน"}</span>
-            </div>
-          </div>
-
-          {/* Result beaker */}
-          <div className="table-step-group">
-            <div className="table-arrow" aria-hidden="true">
-              <ArrowRight className="arrow-h" size={20} />
-              <ArrowDown className="arrow-v" size={20} />
-            </div>
-            <div className="table-item result-beaker">
-              <Beaker size={36} strokeWidth={1.5} />
-              <span>ผลลัพธ์</span>
-              <small>{selected.length ? `${selected.length} ขั้นตอน` : "รอทดลอง"}</small>
-            </div>
-          </div>
-        </div>
-        <div className="table-edge-front" />
-        <div className="table-legs">
-          <div className="leg" /><div className="leg" />
-        </div>
-      </div>
-
-      {/* ── Floor ── */}
-      <div className="lab-floor" />
-    </div>
-  );
+export function ChallengeWorkbench({ level, selected, onAdd, onRemove, onReorder, busy = false }: BenchProps) {
+  return <div className="lab-workspace-3d">
+    <LabScene3D key={level.id} equipment={level.equipment} selected={selected} onAdd={onAdd} busy={busy}/>
+    <section className="lab-sequence" aria-label="ลำดับแผนทดลอง" onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); if (busy) return; const id = event.dataTransfer.getData("equipment-id"); if (level.equipment.some(item => item.id === id)) onAdd(id); }}>
+      <div className="lab-sequence-heading"><h2>แผนทดลองบนโต๊ะ</h2><span>{selected.length} ขั้นตอน · เรียงตามลำดับที่จะทำ</span></div>
+      {selected.length ? <ol>{selected.map((id, index) => {
+        const item = level.equipment.find(item => item.id === id); if (!item) return null;
+        return <li key={id} draggable={!busy} onDragStart={event => { event.dataTransfer.setData("reorder-index", String(index)); event.dataTransfer.effectAllowed = "move"; }} onDragOver={event => event.preventDefault()} onDrop={event => { const source = event.dataTransfer.getData("reorder-index"); if (source !== "") { event.preventDefault(); event.stopPropagation(); const from = Number(source); if (!busy && Number.isInteger(from) && from >= 0 && from < selected.length) onReorder(from, index); } }}>
+          <b className="lab-step-number">{index + 1}</b><ToolIcon id={id}/><span>{item.label}</span><div className="lab-step-actions"><button type="button" disabled={busy || index === 0} onClick={() => onReorder(index, index - 1)} aria-label={`เลื่อน ${item.label} ขึ้น`}><ArrowUp size={17}/></button><button type="button" disabled={busy || index === selected.length - 1} onClick={() => onReorder(index, index + 1)} aria-label={`เลื่อน ${item.label} ลง`}><ArrowDown size={17}/></button><button type="button" disabled={busy} onClick={() => onRemove(id)} aria-label={`นำ ${item.label} ออกจากโต๊ะ`}><X size={17}/></button></div>
+        </li>;
+      })}</ol> : <p className="lab-sequence-empty">เลือกอุปกรณ์จากห้อง 3 มิติหรือชั้นวางด้านล่าง แล้วจัดลำดับการแยกสาร</p>}
+    </section>
+  </div>;
 }

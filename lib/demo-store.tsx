@@ -31,8 +31,8 @@ export function getStoredTeacherId(): string {
   return id;
 }
 
-async function request<T>(path:string,method="GET",body?:unknown,signal?:AbortSignal):Promise<T>{
-  const hdrs:Record<string,string>={"content-type":"application/json"};
+async function request<T>(path:string,method="GET",body?:unknown,signal?:AbortSignal,headers:Record<string,string>={}):Promise<T>{
+  const hdrs:Record<string,string>={"content-type":"application/json",...headers};
   if(typeof window!=="undefined"){
     const tid=getStoredTeacherId();
     if(tid){
@@ -147,12 +147,7 @@ export function DemoProvider({children}:{children:React.ReactNode}){
   const createRoom:Store["createRoom"]=async input=>{const room:Classroom={id:crypto.randomUUID(),code:Array.from(crypto.getRandomValues(new Uint8Array(6)),n=>"ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[n%32]).join(""),name:input.name,subject:input.subject,layout:input.layout,status:"OPEN",catalogVersion:2,desks:input.customDesks&&input.customDesks.length>0?input.customDesks:desks(input.count),students:[],activity:defaultActivity,createdAt:new Date().toISOString()};try{const data=await request<{room:Classroom;teacherToken:string}>("/api/rooms","POST",{room});putRoom(data.room);setOwnedRoomIds(old=>old.includes(room.id)?old:[...old,room.id]);setTokens(old=>({...old,[room.id]:data.teacherToken}));return data.room}catch(e){setError(e instanceof Error?e.message:"สร้างห้องไม่สำเร็จ");throw e}};
   const deleteRoom:Store["deleteRoom"]=async roomId=>{
     if(!tokens[roomId]&&!ownedRoomIds.includes(roomId))throw new Error("คุณไม่มีสิทธิ์ลบห้องนี้");
-    const hdrs:Record<string,string>={};
-    const user=auth.currentUser;if(user){try{const token=await user.getIdToken();hdrs["authorization"]=`Bearer ${token}`}catch{}}
-    if(tokens[roomId])hdrs["x-teacher-token"]=tokens[roomId];
-    const response=await fetch(`/api/teacher/rooms/${encodeURIComponent(roomId)}`,{method:"DELETE",headers:hdrs,cache:"no-store"});
-    const data=await response.json() as {error?:string};
-    if(!response.ok)throw new Error(data.error??"ลบห้องไม่สำเร็จ กรุณาลองอีกครั้ง");
+    await request<{deleted:true}>(`/api/teacher/rooms/${encodeURIComponent(roomId)}`,"DELETE",undefined,undefined,tokens[roomId]?{"x-teacher-token":tokens[roomId]}:{});
     setRooms(current=>current.filter(room=>room.id!==roomId));
     setOwnedRoomIds(current=>current.filter(id=>id!==roomId));
     setTokens(current=>{const next={...current};delete next[roomId];return next});

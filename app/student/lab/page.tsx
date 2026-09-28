@@ -9,9 +9,9 @@ import { currentStudentFrom, useDemo } from "@/lib/demo-store";
 import { finishedLevels, gameIsLive } from "@/lib/live-game";
 import { LEVELS } from "@/lib/levels";
 import { LEGACY_LEVELS } from "@/lib/legacy-levels";
-import { ArrowRight, CheckCircle2, CircleHelp, Lightbulb, RotateCcw, Send, SkipForward, Trophy, X } from "lucide-react";
+import { ArrowRight, CheckCircle2, CircleHelp, Lightbulb, RotateCcw, Send, SkipForward, Trophy } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 export default function Lab(){
   const store=useDemo();
@@ -89,6 +89,7 @@ export default function Lab(){
       onAdd={addStep}
       onRemove={removeStep}
       onReorder={reorderStep}
+      busy={busy||!!success||!!pendingAction}
     />
 
     {/* ── Equipment Shelf (ชั้นวางอุปกรณ์) ── */}
@@ -105,7 +106,8 @@ export default function Lab(){
           <button
             key={e.id}
             className="shelf-item"
-            draggable
+            disabled={busy||!!success||!!pendingAction}
+            draggable={!busy}
             onDragStart={event=>{event.dataTransfer.setData("equipment-id",e.id);event.dataTransfer.effectAllowed="copy"}}
             onClick={()=>addStep(e.id)}
           >

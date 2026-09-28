@@ -1,7 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { countdownSeconds, gameIsLive, rankedStudents } from "./live-game.ts";
+import { countdownSeconds, finishedLevels, gameIsLive, rankedStudents } from "./live-game.ts";
 import type { Student } from "./types.ts";
+
+test("completion includes skipped questions but cannot count unrelated questions",()=>{
+  const student={completed:[1],skipped:[3]} as Student;
+  assert.equal(finishedLevels(student,[1,3]),true);
+  assert.equal(finishedLevels(student,[1,2,3]),false);
+  assert.equal(finishedLevels({completed:[1,3]} as Student,[1,3]),true);
+});
 
 test("countdown gates the game until the server start time",()=>{
   const room={status:"RUNNING" as const,gameStartsAt:10_000};
