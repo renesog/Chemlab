@@ -1,7 +1,7 @@
 "use client";
 
 import { AppShell } from "@/components/app-shell";
-import { ChallengeWorkbench, ToolIcon } from "@/components/challenge-workbench";
+import { ChallengeWorkbench } from "@/components/challenge-workbench";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useGameClock } from "@/components/game-start-countdown";
@@ -9,9 +9,9 @@ import { currentStudentFrom, useDemo } from "@/lib/demo-store";
 import { finishedLevels, gameIsLive } from "@/lib/live-game";
 import { LEVELS } from "@/lib/levels";
 import { LEGACY_LEVELS } from "@/lib/legacy-levels";
-import { ArrowRight, CheckCircle2, CircleHelp, Lightbulb, RotateCcw, Send, SkipForward, Trophy } from "lucide-react";
+import { ArrowRight, CheckCircle2, CircleHelp, Lightbulb, Send, SkipForward, Trophy } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 export default function Lab(){
   const store=useDemo();
@@ -27,10 +27,9 @@ export default function Lab(){
   const [feedback,setFeedback]=useState<{ok:boolean;text:string}|null>(null);
   const [hint,setHint]=useState("");
   const [busy,setBusy]=useState(false);
-  const [pendingAction,setPendingAction]=useState<"submit"|"skip"|null>(null);
+  const [pendingAction,setPendingAction]=useState<"submit"|"skip"|"reset"|null>(null);
   const customQuestion=room?.activity.mode==="QUESTIONS"?room.activity.customQuestions?.find(question=>question.id===level.id):undefined;
   const maxPoints=customQuestion?.maxPoints??room?.activity.pointsByLevel[level.id]??5;
-  const available=useMemo(()=>level.equipment.filter(e=>!selected.includes(e.id)),[level,selected]);
   const mistakes=student?.attemptsByLevel?.[level.id]??0;
   const score=customQuestion?Math.max(1,Math.min(maxPoints,customQuestion.correctPoints)-mistakes*customQuestion.wrongPenalty):Math.max(1,maxPoints-mistakes);
 
@@ -70,7 +69,7 @@ export default function Lab(){
     finally{setBusy(false)}
   }
 
-  return <AppShell title="ห้องทดลอง" back="/student/classroom"><main className="lab-shell">
+  return <AppShell title="ห้องทดลอง" back="/student/classroom"><main className="lab-shell guided-lab">
     {/* ── Header ── */}
     <header className="lab-header challenge-header">
       <div><p className="eyebrow">{room.activity.title} · ชาเลนจ์ {levelIndex+1}/{activeLevels.length}</p><h1>{level.title}</h1><p className="challenge-mixture">สารผสม: <strong>{level.mixture}</strong></p><p className="challenge-objective"><CircleHelp aria-hidden="true"/>{level.objective}</p></div>
@@ -84,40 +83,15 @@ export default function Lab(){
 
     {/* ── Lab Bench (โต๊ะทดลอง) ── */}
     <ChallengeWorkbench
+      key={level.id}
       level={level}
       selected={selected}
       onAdd={addStep}
       onRemove={removeStep}
       onReorder={reorderStep}
+      onReset={()=>setPendingAction("reset")}
       busy={busy||!!success||!!pendingAction}
     />
-
-    {/* ── Equipment Shelf (ชั้นวางอุปกรณ์) ── */}
-    <section className="equipment-shelf">
-      <div className="shelf-header">
-        <div>
-          <h2>ชั้นวางอุปกรณ์</h2>
-          <span>แตะเพื่อเพิ่ม หรือลากไปวางบนโต๊ะทดลอง</span>
-        </div>
-        {selected.length>0&&<button className="shelf-reset" onClick={()=>{setSelected([]);setFeedback(null)}}><RotateCcw size={16}/>เริ่มใหม่</button>}
-      </div>
-      <div className="shelf-grid">
-        {available.map(e=>(
-          <button
-            key={e.id}
-            className="shelf-item"
-            disabled={busy||!!success||!!pendingAction}
-            draggable={!busy}
-            onDragStart={event=>{event.dataTransfer.setData("equipment-id",e.id);event.dataTransfer.effectAllowed="copy"}}
-            onClick={()=>addStep(e.id)}
-          >
-            <ToolIcon id={e.id}/>
-            <span>{e.label}</span>
-          </button>
-        ))}
-        {!available.length&&<p className="shelf-empty">เลือกอุปกรณ์ครบแล้ว — ตรวจลำดับแล้วส่งคำตอบได้เลย</p>}
-      </div>
-    </section>
 
     {/* ── Feedback ── */}
     {feedback&&!feedback.ok&&<div className="feedback error" role="status"><CircleHelp/><span><strong>ยังไม่สำเร็จ ลองปรับแผน</strong>{feedback.text}</span></div>}
@@ -127,7 +101,7 @@ export default function Lab(){
 
     {/* ── Action Bar ── */}
     <div className="lab-action-bar">
-      <span className="action-bar-note">ตอบผิดลดคะแนนที่จะได้ครั้งละ {customQuestion?.wrongPenalty??1} · ต่ำสุด 1</span>
+      <div className="lab-submit-summary"><strong>{selected.length?`แผนของคุณมี ${selected.length} ขั้นตอน`:"เพิ่มอุปกรณ์ในถาดเพื่อเริ่มทดลอง"}</strong><span className="action-bar-note">ตอบผิดลดคะแนนที่จะได้ครั้งละ {customQuestion?.wrongPenalty??1} · ต่ำสุด 1</span><small>กดทดลองเพื่อยืนยันส่งแผนและรับผลการแยกสาร</small></div>
       <div className="action-bar-buttons">
         {mistakes>0&&<button className="secondary-button lab-skip" onClick={()=>setPendingAction("skip")} disabled={busy||!!success}><SkipForward size={18}/>ข้ามข้อนี้</button>}
         <button className="primary-button submit-answer" onClick={()=>setPendingAction("submit")} disabled={busy||!!success||selected.length===0}>{busy?"กำลังทดลอง…":<><Send size={18}/>ทดลองแยกสาร</>}</button>
@@ -138,6 +112,6 @@ export default function Lab(){
     {success&&<Dialog open onOpenChange={()=>{}}><DialogContent className="challenge-success" showCloseButton={false}><div className="challenge-success-icon"><CheckCircle2 size={46}/></div><p className="eyebrow">ชาเลนจ์ {levelIndex+1} สำเร็จ</p><DialogTitle id="challenge-success-title">แยกสารได้แล้ว!</DialogTitle><strong className="challenge-earned">+{success.score} คะแนน</strong><DialogDescription>{success.explanation}</DialogDescription><div className="separated-materials"><span>สารที่แยกได้</span><div>{level.mixture.split(/\s*\+\s*/).map((name,index)=><strong key={`${index}-${name}`}>{name.trim()}</strong>)}</div></div><button className="primary-button" onClick={nextChallenge}>{levelIndex===activeLevels.length-1?"ดูสรุปผล":"ไปชาเลนจ์ถัดไป"}<ArrowRight/></button></DialogContent></Dialog>}
 
     {/* ── Confirm Dialog ── */}
-    <AlertDialog open={!!pendingAction} onOpenChange={open=>{if(!open)setPendingAction(null)}}><AlertDialogContent className="lab-confirm-dialog"><AlertDialogTitle>{pendingAction==="skip"?`ข้ามชาเลนจ์ ${levelIndex+1}?`:`ส่งแผนทดลองชาเลนจ์ ${levelIndex+1}?`}</AlertDialogTitle><AlertDialogDescription>{pendingAction==="skip"?"ข้อนี้จะได้ 0 คะแนน และกลับมาทำใหม่ไม่ได้หลังยืนยัน":"ตรวจลำดับอุปกรณ์อีกครั้ง หากยังไม่ถูกต้อง คะแนนที่จะได้ในข้อนี้จะลดลง"}</AlertDialogDescription><AlertDialogFooter><AlertDialogCancel>กลับไปแก้ไข</AlertDialogCancel><button className={pendingAction==="skip"?"lab-confirm-skip":"primary-button"} onClick={()=>{const action=pendingAction;setPendingAction(null);if(action==="skip")void skip();else if(action==="submit")void submit()}}>{pendingAction==="skip"?"ยืนยันข้ามข้อ":"ยืนยันส่งคำตอบ"}</button></AlertDialogFooter></AlertDialogContent></AlertDialog>
+    <AlertDialog open={!!pendingAction} onOpenChange={open=>{if(!open)setPendingAction(null)}}><AlertDialogContent className="lab-confirm-dialog"><AlertDialogTitle>{pendingAction==="reset"?"ล้างรายการในถาดทดลอง?":pendingAction==="skip"?`ข้ามชาเลนจ์ ${levelIndex+1}?`:`ส่งแผนทดลองชาเลนจ์ ${levelIndex+1}?`}</AlertDialogTitle><AlertDialogDescription>{pendingAction==="reset"?"อุปกรณ์และลำดับที่จัดไว้จะถูกนำออกจากถาด คะแนนและจำนวนครั้งที่ส่งคำตอบจะยังคงเดิม":pendingAction==="skip"?"ข้อนี้จะได้ 0 คะแนน และกลับมาทำใหม่ไม่ได้หลังยืนยัน":"ตรวจลำดับอุปกรณ์อีกครั้ง หากยังไม่ถูกต้อง คะแนนที่จะได้ในข้อนี้จะลดลง"}</AlertDialogDescription><AlertDialogFooter><AlertDialogCancel>กลับไปแก้ไข</AlertDialogCancel><button className={pendingAction==="skip"||pendingAction==="reset"?"lab-confirm-skip":"primary-button"} onClick={()=>{const action=pendingAction;setPendingAction(null);if(action==="reset"){setSelected([]);setFeedback(null)}else if(action==="skip")void skip();else if(action==="submit")void submit()}}>{pendingAction==="reset"?"ยืนยันล้างรายการ":pendingAction==="skip"?"ยืนยันข้ามข้อ":"ยืนยันส่งคำตอบ"}</button></AlertDialogFooter></AlertDialogContent></AlertDialog>
   </main></AppShell>
 }

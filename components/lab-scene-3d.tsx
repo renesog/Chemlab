@@ -7,8 +7,8 @@ import { Maximize2, Minus, Plus, RotateCcw } from "lucide-react";
 import { labToolKind, type LabToolKind } from "@/lib/lab-equipment";
 
 type Equipment = { id: string; label: string };
-type Props = { equipment: Equipment[]; selected: string[]; onAdd: (id: string) => void; busy?: boolean };
-type Runtime = { selection: (ids: string[]) => void; reset: () => void; zoom: (factor: number) => void; top: () => void };
+type Props = { equipment: Equipment[]; selected: string[]; focusedId: string|null; onInspect: (id: string) => void; busy?: boolean };
+type Runtime = { selection: (ids: string[]) => void; focus: (id:string|null) => void; reset: () => void; zoom: (factor: number) => void; top: () => void };
 
 function release(root: THREE.Object3D) {
   root.traverse(object => {
@@ -99,23 +99,30 @@ function label(parent: THREE.Object3D, text: string, x: number, y: number, z: nu
   sprite.position.set(x, y, z); sprite.scale.set(width, width / 4, 1); parent.add(sprite);
 }
 
-export default function LabScene3D({ equipment, selected, onAdd, busy = false }: Props) {
+export default function LabScene3D({ equipment, selected, focusedId, onInspect, busy = false }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const runtime = useRef<Runtime | null>(null);
-  const onAddRef = useRef(onAdd);
+  const onInspectRef = useRef(onInspect);
+  const focusedRef = useRef(focusedId);
   const selectedRef = useRef(selected);
   const busyRef = useRef(busy);
   const [unavailable, setUnavailable] = useState(false);
-  const [message, setMessage] = useState("แตะอุปกรณ์ที่ชั้นเพื่อวางบนโต๊ะ");
+  const [message, setMessage] = useState("แตะอุปกรณ์เพื่อดูรายละเอียด แล้วเพิ่มลงถาดทดลอง");
   const equipmentKey = JSON.stringify(equipment);
-  useEffect(() => { onAddRef.current = onAdd; busyRef.current = busy; }, [onAdd, busy]);
+  useEffect(() => { onInspectRef.current = onInspect; busyRef.current = busy; }, [onInspect, busy]);
   useEffect(() => { selectedRef.current = selected; runtime.current?.selection(selected); }, [selected]);
+  useEffect(() => { focusedRef.current = focusedId; runtime.current?.focus(focusedId); }, [focusedId]);
 
   useEffect(() => {
     const container = host.current; if (!container) return;
     let renderer: THREE.WebGLRenderer;
     try { renderer = new THREE.WebGLRenderer({ antialias: window.devicePixelRatio < 2, powerPreference: "low-power" }); }
-    catch { setUnavailable(true); return; }
+    catch {
+      // WebGL support is known only after initializing this external browser resource.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setUnavailable(true);
+      return;
+    }
     const items = JSON.parse(equipmentKey) as Equipment[];
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     renderer.shadowMap.enabled = window.innerWidth > 650; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -124,7 +131,7 @@ export default function LabScene3D({ equipment, selected, onAdd, busy = false }:
     container.appendChild(renderer.domElement);
     const scene = new THREE.Scene(); scene.background = new THREE.Color(0xdcebf0);
     const camera = new THREE.PerspectiveCamera(43, 1, .1, 70);
-    camera.position.set(8, 7, 10);
+    camera.position.set(5, 7, 10);
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.target.set(0, 1.1, -.3); controls.enablePan = false; controls.enableZoom = false;
     controls.minDistance = 6; controls.maxDistance = 20; controls.minPolarAngle = .18; controls.maxPolarAngle = Math.PI / 2.15;
@@ -155,9 +162,12 @@ export default function LabScene3D({ equipment, selected, onAdd, busy = false }:
     label(scene, "สารผสม", -3, 2.85, .5, 1.15);
     const shelf = new THREE.Group(); scene.add(shelf);
     items.forEach((item, index) => {
-      const model = instrument(labToolKind(item.id, item.label)); model.scale.setScalar(.72);
+      const model = instrument(labToolKind(item.id, item.label)); model.scale.setScalar(.88);
       model.position.set(-3.85 + index * (7.7 / Math.max(1, items.length - 1)), 1.19, -2.7);
       model.userData.equipmentId = item.id; shelf.add(model);
+      // Invisible hit area makes thin tools and touch targets easier to select.
+      const hotspot=new THREE.Mesh(new THREE.BoxGeometry(.95,1.5,.85),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}));
+      hotspot.position.y=.7; model.add(hotspot);
       label(model, `${index + 1}`, 0, 1.65, 0, .55);
     });
     const placed = new THREE.Group(); scene.add(placed);
@@ -166,16 +176,29 @@ export default function LabScene3D({ equipment, selected, onAdd, busy = false }:
     let frame = 0;
     let lastFrame = 0;
     const render = () => { if (!stopped && visible && !document.hidden) renderer.render(scene, camera); };
+    let hoveredId:string|null=null;
+    const highlight=()=>{
+      for(const model of [...shelf.children,...placed.children]){
+        const id=model.userData.equipmentId as string;
+        const active=id===focusedRef.current||id===hoveredId;
+        model.traverse(object=>{
+          if(!(object instanceof THREE.Mesh)||!(object.material instanceof THREE.MeshStandardMaterial))return;
+          object.material.emissive.setHex(active?0x087e89:selectedRef.current.includes(id)?0x154637:0x000000);
+          object.material.emissiveIntensity=active?.65:.3;
+        });
+      }
+      render();
+    };
     const selection = (ids: string[]) => {
       release(placed); placed.clear();
       ids.forEach((id, index) => {
         const item = items.find(item => item.id === id); if (!item) return;
         const model = instrument(labToolKind(item.id, item.label)); model.scale.setScalar(.73);
-        model.position.set(-1.65 + (index % 5) * 1.04, 1.62, index < 5 ? -.25 : 1.25); placed.add(model);
+        model.position.set(-1.65 + (index % 5) * 1.04, 1.62, index < 5 ? -.25 : 1.25); model.userData.equipmentId=id; placed.add(model);
         label(model, `${index + 1}`, 0, 1.65, 0, .48);
-      }); render();
+      }); highlight();
     };
-    runtime.current = { selection, reset: () => { controls.reset(); render(); }, zoom: factor => { const offset = camera.position.clone().sub(controls.target); offset.setLength(THREE.MathUtils.clamp(offset.length() * factor, 6, 20)); camera.position.copy(controls.target).add(offset); controls.update(); render(); }, top: () => { camera.position.set(0, 13, 3); controls.update(); render(); } };
+    runtime.current = { selection, focus:()=>highlight(), reset: () => { controls.reset(); render(); }, zoom: factor => { const offset = camera.position.clone().sub(controls.target); offset.setLength(THREE.MathUtils.clamp(offset.length() * factor, 6, 20)); camera.position.copy(controls.target).add(offset); controls.update(); render(); }, top: () => { camera.position.set(0, 13, 3); controls.update(); render(); } };
     selection(selectedRef.current);
     controls.addEventListener("change", render);
     const resize = () => { const { width, height } = container.getBoundingClientRect(); renderer.setSize(Math.max(1, width), Math.max(1, height)); camera.aspect = Math.max(1, width) / Math.max(1, height); camera.updateProjectionMatrix(); render(); };
@@ -184,21 +207,34 @@ export default function LabScene3D({ equipment, selected, onAdd, busy = false }:
     document.addEventListener("visibilitychange", render);
     const pointer = new THREE.Vector2(); const raycaster = new THREE.Raycaster(); let down = { x: 0, y: 0 };
     const pointerDown = (event: PointerEvent) => { down = { x: event.clientX, y: event.clientY }; };
-    const pointerUp = (event: PointerEvent) => {
-      if (busyRef.current || Math.hypot(event.clientX - down.x, event.clientY - down.y) > 6) return;
+    const hitId = (event: PointerEvent) => {
       const rect = renderer.domElement.getBoundingClientRect(); pointer.set((event.clientX - rect.left) / rect.width * 2 - 1, -(event.clientY - rect.top) / rect.height * 2 + 1);
       raycaster.setFromCamera(pointer, camera);
-      let hit: THREE.Object3D | null = raycaster.intersectObjects(shelf.children, true)[0]?.object ?? null;
+      let hit: THREE.Object3D | null = raycaster.intersectObjects([...shelf.children,...placed.children], true)[0]?.object ?? null;
       while (hit && !hit.userData.equipmentId) hit = hit.parent;
-      const id = hit?.userData.equipmentId as string | undefined;
-      if (id) { const item = items.find(item => item.id === id)!; if (!selectedRef.current.includes(id)) { onAddRef.current(id); setMessage(`เพิ่ม ${item.label} บนโต๊ะแล้ว`); } else setMessage(`${item.label} อยู่บนโต๊ะแล้ว`); }
+      return hit?.userData.equipmentId as string | undefined;
     };
+    const pointerUp = (event: PointerEvent) => {
+      if (busyRef.current || Math.hypot(event.clientX - down.x, event.clientY - down.y) > 6) return;
+      const id=hitId(event);
+      if(id){onInspectRef.current(id);setMessage(`เลือก ${items.find(item=>item.id===id)!.label} · ดูรายละเอียดในแผงอุปกรณ์`);}
+    };
+    const pointerMove=(event:PointerEvent)=>{
+      if(event.buttons||busyRef.current)return;
+      const id=hitId(event)??null;
+      if(id===hoveredId)return;
+      hoveredId=id;highlight();renderer.domElement.style.cursor=id?"pointer":"grab";
+      renderer.domElement.title=id?items.find(item=>item.id===id)!.label:"ลากเพื่อหมุนมุมมอง";
+      setMessage(id?items.find(item=>item.id===id)!.label:"แตะอุปกรณ์เพื่อดูรายละเอียด แล้วเพิ่มลงถาดทดลอง");
+    };
+    const pointerLeave=()=>{hoveredId=null;highlight();};
     const contextLost = (event: Event) => { event.preventDefault(); setUnavailable(true); };
     renderer.domElement.addEventListener("pointerdown", pointerDown); renderer.domElement.addEventListener("pointerup", pointerUp); renderer.domElement.addEventListener("webglcontextlost", contextLost);
+    renderer.domElement.addEventListener("pointermove",pointerMove);renderer.domElement.addEventListener("pointerleave",pointerLeave);
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const animate = (time: number) => { if (stopped) return; frame = requestAnimationFrame(animate); if (time - lastFrame < 50 || !visible || document.hidden) return; lastFrame = time; if (busyRef.current && !reducedMotion) { sample.rotation.z = Math.sin(time * .006) * .025; render(); } else if (sample.rotation.z !== 0) { sample.rotation.z = 0; render(); } };
     frame = requestAnimationFrame(animate);
-    return () => { stopped = true; cancelAnimationFrame(frame); runtime.current = null; observer.disconnect(); visibility.disconnect(); document.removeEventListener("visibilitychange", render); controls.dispose(); renderer.domElement.removeEventListener("pointerdown", pointerDown); renderer.domElement.removeEventListener("pointerup", pointerUp); renderer.domElement.removeEventListener("webglcontextlost", contextLost); release(scene); renderer.dispose(); renderer.domElement.remove(); };
+    return () => { stopped = true; cancelAnimationFrame(frame); runtime.current = null; observer.disconnect(); visibility.disconnect(); document.removeEventListener("visibilitychange", render); controls.dispose(); renderer.domElement.removeEventListener("pointerdown", pointerDown); renderer.domElement.removeEventListener("pointerup", pointerUp); renderer.domElement.removeEventListener("pointermove",pointerMove);renderer.domElement.removeEventListener("pointerleave",pointerLeave); renderer.domElement.removeEventListener("webglcontextlost", contextLost); release(scene); renderer.dispose(); renderer.domElement.remove(); };
   }, [equipmentKey]);
 
   return <section className="virtual-lab" aria-label="ห้องแล็บเสมือนสามมิติ">
