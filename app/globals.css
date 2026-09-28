@@ -1158,3 +1158,73 @@ body{font-size:16px;line-height:1.55;background:linear-gradient(180deg,#f8fbfd 0
 @media(max-width:650px) { .game-countdown { padding:20px 16px; gap:8px; } .countdown-title { margin-bottom:16px; } .countdown-caption { font-size:.82rem; } .countdown-decor i:nth-child(1) { left:-25px; } .countdown-decor i:nth-child(4) { right:-20px; } }
 @media(max-height:600px) and (min-width:650px) { .game-countdown { padding:12px 24px; gap:4px; } .countdown-title { font-size:1.3rem; margin:6px 0 8px; } .countdown-dial { width:170px; } .countdown-dial-copy strong { font-size:2.6rem; } .is-counting .countdown-dial-copy strong { font-size:4.4rem; } .countdown-dial-copy span { font-size:.62rem; } .countdown-steps { margin-top:8px; } .countdown-caption { margin:8px 0; } }
 @media(prefers-reduced-motion:reduce) { .game-countdown * { animation:none!important; transition:none!important; } }
+
+/* Student character creator. Shared avatar geometry remains the same. */
+.character-creator { width:min(1140px,calc(100% - 48px)); margin:0 auto; padding:28px 0 48px; }
+.character-heading { margin-bottom:24px; }
+.character-heading .eyebrow { display:flex; align-items:center; gap:7px; color:#087b86; font-size:.75rem; margin:0 0 8px; }
+.character-heading h1 { margin:0; font-size:clamp(1.5rem,3vw,2rem); line-height:1.4; font-weight:700; color:var(--navy); }
+.character-heading>p:not(.eyebrow) { margin:6px 0 0; color:var(--muted); font-size:.9rem; }
+.character-steps { display:flex; flex-wrap:wrap; align-items:center; gap:12px; list-style:none; padding:0; margin:18px 0 0; font-size:.78rem; color:var(--muted); }
+.character-steps li { display:flex; align-items:center; gap:7px; }
+.character-steps li+li:before { content:""; width:22px; height:1px; background:var(--line); margin-right:5px; }
+.character-steps li>span { display:grid; place-items:center; width:23px; height:23px; border:1px solid var(--line); border-radius:50%; font-size:.72rem; }
+.character-steps [aria-current=step] { color:var(--navy); font-weight:700; }
+.character-steps [aria-current=step]>span { background:#0a8391; color:#fff; border-color:#0a8391; }
+.character-steps .is-complete { color:#187352; }
+.character-layout { display:grid; grid-template-columns:minmax(0,2fr) minmax(0,3fr); gap:28px; align-items:start; }
+.character-preview { position:sticky; top:92px; display:flex; align-items:center; flex-direction:column; gap:16px; padding:24px; border:1px solid #cce5e9; border-radius:16px; background:#edf8fa; overflow:hidden; }
+.character-preview-heading { width:100%; display:flex; justify-content:space-between; align-items:center; gap:8px; color:#486978; font-size:.76rem; }
+.character-preview-badge { color:#087b86; border:1px solid #c0e4e7; background:#fff; padding:4px 7px; border-radius:6px; font-size:.65rem; white-space:nowrap; }
+.character-portrait { display:grid; place-items:center; width:min(100%,300px); aspect-ratio:1; padding:10px; margin-top:6px; border:1px solid #c9e5e9; border-radius:50%; background:#f9fdfd; }
+.character-portrait>.avatar { width:100%!important; height:100%!important; box-shadow:0 0 0 6px #e1f1f3; }
+.character-creator .avatar .face,.character-creator .avatar .shirt,.character-creator .avatar .hair,.character-creator .avatar .avatar-hat { transition:background-color 160ms,border-radius 160ms; }
+.character-identity { text-align:center; min-width:0; max-width:100%; }
+.character-identity h2 { color:var(--navy); font-size:1.4rem; line-height:1.35; margin:0; overflow-wrap:anywhere; }
+.character-identity p { margin:6px 0 0; color:#4b707a; font-size:.8rem; }
+.character-random { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; padding:8px 16px; border:1px solid #b9d8df; border-radius:9px; background:#fff; color:var(--navy); font-size:.82rem; font-weight:600; cursor:pointer; }
+.character-preview-note { display:flex; align-items:center; gap:7px; color:#547b86; font-size:.7rem; padding-top:12px; border-top:1px solid #cfe6e9; width:100%; justify-content:center; }
+.character-controls { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px 20px; padding:24px; background:#fff; border:1px solid var(--line); border-radius:16px; }
+.character-controls-heading { display:flex; align-items:center; gap:9px; grid-column:1/-1; color:#0a8793; padding-bottom:16px; border-bottom:1px solid #eaf0f3; }
+.character-controls-heading h2 { margin:0; color:var(--navy); font-size:1rem; font-weight:700; }
+.character-controls fieldset { min-width:0; padding:0; margin:0; border:0; }
+.character-controls legend { font-size:.84rem; font-weight:700; color:var(--navy); padding:0; margin-bottom:10px; }
+.character-choices { display:flex; flex-wrap:wrap; gap:6px; }
+.character-option { position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; min-height:44px; min-width:44px; padding:9px 7px; border:2px solid #e3eaf0; border-radius:10px; background:#fff; color:#536b7e; font-size:.75rem; cursor:pointer; transition:background-color 160ms,border-color 160ms; }
+.character-option:hover { background:#f4f9fa; border-color:#90bec7; }
+.character-option.is-selected { background:#ecf9fa; border-color:#08a6b5; color:#0b2942; font-weight:700; }
+.character-option-check { position:absolute; top:-5px; right:-4px; width:18px; height:18px; padding:3px; border-radius:50%; background:#087d89; color:white; box-shadow:0 0 0 2px white; }
+.character-swatch { display:block; width:30px; height:30px; border-radius:50%; border:1px solid #00000012; }
+.character-thumbnail { display:block; pointer-events:none; }
+.choices-gender { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0; padding:3px; border:1px solid var(--line); background:#f6f9fb; border-radius:11px; }
+.choices-gender .character-option { flex-direction:row; padding:7px 4px; font-size:.77rem; border-color:transparent; background:transparent; border-radius:8px; }
+.choices-gender .character-option.is-selected { border-color:#08a6b5; background:#ecf9fa; }
+.choices-hair,.choices-hat { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); }
+.choices-skin .character-option,.choices-hairColor .character-option { flex:1; }
+.choices-shirt .character-option { flex:1; padding:9px 4px; }
+.character-save { grid-column:1/-1; border-top:1px solid #eaf0f3; padding-top:20px; }
+.character-save .primary-button { width:100%; min-height:50px; border-radius:12px; box-shadow:none; font-size:.9rem; padding:12px; font-weight:700; }
+.character-save>p:last-child { margin:10px 0 0; color:var(--muted); font-size:.72rem; text-align:center; }
+.character-save .error-box { margin:0 0 12px; }
+.character-creator button:disabled,.character-controls fieldset:disabled .character-option { opacity:.5; cursor:not-allowed; }
+.character-random:hover:not(:disabled) { background:#f6fcfc; border-color:#08a6b5; }
+.character-creator button:active:not(:disabled) { transform:translateY(1px); }
+.character-saving { animation:spin .8s linear infinite; }
+@media(min-width:769px) and (max-width:1023px) { .character-layout { grid-template-columns:minmax(0,2fr) minmax(0,3fr); gap:20px; } .character-controls { grid-template-columns:1fr; padding:20px; gap:20px; } .character-preview { padding:18px; } }
+@media(max-width:768px) {
+ .character-creator { width:calc(100% - 32px); padding:20px 0 86px; }
+ .character-heading { margin-bottom:20px; }
+ .character-steps { gap:8px; font-size:.72rem; }
+ .character-steps li+li:before { width:12px; margin-right:0; }
+ .character-layout { grid-template-columns:1fr; gap:16px; }
+ .character-preview { position:static; padding:16px; gap:10px; }
+ .character-preview-heading { font-size:.72rem; }
+ .character-portrait { width:152px; padding:6px; margin:0; }
+ .character-identity h2 { font-size:1.15rem; }
+ .character-identity p { margin-top:3px; font-size:.72rem; }
+ .character-preview-note { display:none; }
+ .character-controls { padding:20px 16px; gap:20px; }
+ .character-option { font-size:.76rem; }
+}
+@media(max-width:520px) { .character-controls { grid-template-columns:1fr; } .choices-gender .character-option { padding:7px 12px; } .choices-hair .character-option,.choices-hat .character-option { flex-direction:row; flex-wrap:wrap; } .character-choices { gap:8px; } .character-option { padding:10px; } }
+@media(prefers-reduced-motion:reduce) { .character-creator * { animation:none!important; transition:none!important; } }
