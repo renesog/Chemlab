@@ -5,10 +5,11 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { Maximize2, Minus, Plus, RotateCcw } from "lucide-react";
 import { labToolKind, type LabToolKind } from "@/lib/lab-equipment";
+import { canPlaceLabTool } from "@/lib/lab-placement";
 
 type Equipment = { id: string; label: string };
-type Props = { equipment: Equipment[]; selected: string[]; focusedId: string|null; onInspect: (id: string) => void; busy?: boolean };
-type Runtime = { selection: (ids: string[]) => void; focus: (id:string|null) => void; reset: () => void; zoom: (factor: number) => void; top: () => void };
+type Props = { equipment: Equipment[]; selected: string[]; focusedId: string|null; onInspect: (id: string) => void; onAdd: (id: string) => void; busy?: boolean };
+type Runtime = { cancel: () => void; selection: (ids: string[]) => void; focus: (id:string|null) => void; reset: () => void; zoom: (factor: number) => void; top: () => void };
 
 function release(root: THREE.Object3D) {
   root.traverse(object => {
@@ -99,17 +100,18 @@ function label(parent: THREE.Object3D, text: string, x: number, y: number, z: nu
   sprite.position.set(x, y, z); sprite.scale.set(width, width / 4, 1); parent.add(sprite);
 }
 
-export default function LabScene3D({ equipment, selected, focusedId, onInspect, busy = false }: Props) {
+export default function LabScene3D({ equipment, selected, focusedId, onInspect, onAdd, busy = false }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const runtime = useRef<Runtime | null>(null);
   const onInspectRef = useRef(onInspect);
+  const onAddRef = useRef(onAdd);
   const focusedRef = useRef(focusedId);
   const selectedRef = useRef(selected);
   const busyRef = useRef(busy);
   const [unavailable, setUnavailable] = useState(false);
-  const [message, setMessage] = useState("แตะอุปกรณ์เพื่อดูรายละเอียด แล้วเพิ่มลงถาดทดลอง");
+  const [message, setMessage] = useState("ลากอุปกรณ์จากชั้นมาวางบนโต๊ะ · แตะเพื่อดูรายละเอียด");
   const equipmentKey = JSON.stringify(equipment);
-  useEffect(() => { onInspectRef.current = onInspect; busyRef.current = busy; }, [onInspect, busy]);
+  useEffect(() => { onInspectRef.current = onInspect; onAddRef.current = onAdd; busyRef.current = busy; if (busy) runtime.current?.cancel(); }, [onInspect, onAdd, busy]);
   useEffect(() => { selectedRef.current = selected; runtime.current?.selection(selected); }, [selected]);
   useEffect(() => { focusedRef.current = focusedId; runtime.current?.focus(focusedId); }, [focusedId]);
 
@@ -171,6 +173,8 @@ export default function LabScene3D({ equipment, selected, focusedId, onInspect, 
       label(model, `${index + 1}`, 0, 1.65, 0, .55);
     });
     const placed = new THREE.Group(); scene.add(placed);
+    const positions = new Map<string, THREE.Vector3>();
+    let cancelDrag = () => {};
     let stopped = false;
     let visible = true;
     let frame = 0;
@@ -190,55 +194,122 @@ export default function LabScene3D({ equipment, selected, focusedId, onInspect, 
       render();
     };
     const selection = (ids: string[]) => {
+      cancelDrag();
+      for (const id of positions.keys()) if (!ids.includes(id)) positions.delete(id);
       release(placed); placed.clear();
       ids.forEach((id, index) => {
         const item = items.find(item => item.id === id); if (!item) return;
         const model = instrument(labToolKind(item.id, item.label)); model.scale.setScalar(.73);
         model.position.set(-1.65 + (index % 5) * 1.04, 1.62, index < 5 ? -.25 : 1.25); model.userData.equipmentId=id; placed.add(model);
+        if (positions.has(id)) model.position.copy(positions.get(id)!);
         label(model, `${index + 1}`, 0, 1.65, 0, .48);
       }); highlight();
     };
-    runtime.current = { selection, focus:()=>highlight(), reset: () => { controls.reset(); render(); }, zoom: factor => { const offset = camera.position.clone().sub(controls.target); offset.setLength(THREE.MathUtils.clamp(offset.length() * factor, 6, 20)); camera.position.copy(controls.target).add(offset); controls.update(); render(); }, top: () => { camera.position.set(0, 13, 3); controls.update(); render(); } };
+    runtime.current = { cancel: () => cancelDrag(), selection, focus:()=>highlight(), reset: () => { cancelDrag(); controls.reset(); render(); }, zoom: factor => { cancelDrag(); const offset = camera.position.clone().sub(controls.target); offset.setLength(THREE.MathUtils.clamp(offset.length() * factor, 6, 20)); camera.position.copy(controls.target).add(offset); controls.update(); render(); }, top: () => { cancelDrag(); camera.position.set(0, 13, 3); controls.update(); render(); } };
     selection(selectedRef.current);
     controls.addEventListener("change", render);
     const resize = () => { const { width, height } = container.getBoundingClientRect(); renderer.setSize(Math.max(1, width), Math.max(1, height)); camera.aspect = Math.max(1, width) / Math.max(1, height); camera.updateProjectionMatrix(); render(); };
     const observer = new ResizeObserver(resize); observer.observe(container); resize();
     const visibility = new IntersectionObserver(entries => { visible = entries[0].isIntersecting; render(); }); visibility.observe(container);
     document.addEventListener("visibilitychange", render);
-    const pointer = new THREE.Vector2(); const raycaster = new THREE.Raycaster(); let down = { x: 0, y: 0 };
-    const pointerDown = (event: PointerEvent) => { down = { x: event.clientX, y: event.clientY }; };
-    const hitId = (event: PointerEvent) => {
+    const pointer = new THREE.Vector2(); const raycaster = new THREE.Raycaster();
+    const canvas = renderer.domElement;
+    const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -1.62);
+    const marker = new THREE.Mesh(new THREE.RingGeometry(.32, .38, 32), new THREE.MeshBasicMaterial({ color: 0x169b74, transparent: true, opacity: .85, side: THREE.DoubleSide, depthWrite: false }));
+    marker.rotation.x = -Math.PI / 2; marker.visible = false; scene.add(marker);
+    type Drag = { pointerId: number; id: string; x: number; y: number; model: THREE.Object3D; original: THREE.Vector3; temporary: boolean; moving: boolean; valid: boolean };
+    let drag: Drag | null = null;
+    const aim = (event: PointerEvent) => {
       const rect = renderer.domElement.getBoundingClientRect(); pointer.set((event.clientX - rect.left) / rect.width * 2 - 1, -(event.clientY - rect.top) / rect.height * 2 + 1);
       raycaster.setFromCamera(pointer, camera);
+    };
+    const hitId = (event: PointerEvent) => {
+      aim(event);
       let hit: THREE.Object3D | null = raycaster.intersectObjects([...shelf.children,...placed.children], true)[0]?.object ?? null;
       while (hit && !hit.userData.equipmentId) hit = hit.parent;
       return hit?.userData.equipmentId as string | undefined;
     };
+    cancelDrag = () => {
+      const previous = drag; drag = null;
+      if (!previous) return;
+      if (previous.temporary) { scene.remove(previous.model); release(previous.model); }
+      else previous.model.position.copy(previous.original);
+      marker.visible = false; controls.enabled = true; canvas.style.cursor = "grab";
+      if (canvas.hasPointerCapture(previous.pointerId)) canvas.releasePointerCapture(previous.pointerId);
+      render();
+    };
+    const pointerDown = (event: PointerEvent) => {
+      if (drag) { event.stopImmediatePropagation(); return; }
+      if (busyRef.current || !event.isPrimary || event.button !== 0) return;
+      const id = hitId(event); if (!id) return;
+      event.stopImmediatePropagation();
+      controls.enabled = false; canvas.setPointerCapture(event.pointerId);
+      const existing = placed.children.find(model => model.userData.equipmentId === id);
+      const item = items.find(item => item.id === id)!;
+      const model = existing ?? instrument(labToolKind(id, item.label));
+      if (!existing) { model.scale.setScalar(.73); model.visible = false; scene.add(model); }
+      drag = { pointerId: event.pointerId, id, x: event.clientX, y: event.clientY, model, original: model.position.clone(), temporary: !existing, moving: false, valid: false };
+      canvas.style.cursor = "grabbing";
+    };
+    const moveDrag = (event: PointerEvent) => {
+      if (!drag || event.pointerId !== drag.pointerId) return;
+      if (busyRef.current) { cancelDrag(); return; }
+      if (!drag.moving && Math.hypot(event.clientX - drag.x, event.clientY - drag.y) < 6) return;
+      drag.moving = true; aim(event);
+      const point = raycaster.ray.intersectPlane(plane, new THREE.Vector3());
+      const rect = canvas.getBoundingClientRect();
+      drag.valid = !!point && canPlaceLabTool(point.x, point.z)
+        && event.clientX >= rect.left && event.clientX <= rect.right && event.clientY >= rect.top && event.clientY <= rect.bottom;
+      if (point) { drag.model.position.copy(point); drag.model.visible = true; marker.position.set(point.x, 1.635, point.z); }
+      marker.visible = !!point; marker.material.color.setHex(drag.valid ? 0x169b74 : 0xd85055);
+      setMessage(drag.valid ? "ปล่อยเพื่อวางบนโต๊ะ · ย้ายตำแหน่งได้โดยไม่เปลี่ยนลำดับขั้นตอน" : "ลากมาวางภายในโต๊ะ โดยเว้นพื้นที่สารผสม · ปล่อยด้านนอกเพื่อยกเลิก");
+      render();
+    };
     const pointerUp = (event: PointerEvent) => {
-      if (busyRef.current || Math.hypot(event.clientX - down.x, event.clientY - down.y) > 6) return;
-      const id=hitId(event);
-      if(id){onInspectRef.current(id);setMessage(`เลือก ${items.find(item=>item.id===id)!.label} · ดูรายละเอียดในแผงอุปกรณ์`);}
+      if (!drag || event.pointerId !== drag.pointerId) return;
+      moveDrag(event);
+      if (!drag) return;
+      const { id, moving, valid, model } = drag;
+      const position = model.position.clone();
+      cancelDrag();
+      if (busyRef.current) return;
+      if (moving && valid) {
+        positions.set(id, position);
+        const existing = placed.children.find(model => model.userData.equipmentId === id);
+        if (existing) existing.position.copy(position);
+        else onAddRef.current(id);
+        setMessage(`วาง ${items.find(item => item.id === id)!.label} แล้ว · เรียงขั้นตอนได้ในถาดทดลอง`);
+        render();
+      } else if (moving) setMessage("ยกเลิกการวางแล้ว · ลากอุปกรณ์มาวางภายในโต๊ะ");
+      if (!moving || valid) onInspectRef.current(id);
     };
     const pointerMove=(event:PointerEvent)=>{
+      if (drag) { moveDrag(event); return; }
       if(event.buttons||busyRef.current)return;
       const id=hitId(event)??null;
       if(id===hoveredId)return;
-      hoveredId=id;highlight();renderer.domElement.style.cursor=id?"pointer":"grab";
+      hoveredId=id;highlight();renderer.domElement.style.cursor="grab";
       renderer.domElement.title=id?items.find(item=>item.id===id)!.label:"ลากเพื่อหมุนมุมมอง";
-      setMessage(id?items.find(item=>item.id===id)!.label:"แตะอุปกรณ์เพื่อดูรายละเอียด แล้วเพิ่มลงถาดทดลอง");
+      setMessage(id?`${items.find(item=>item.id===id)!.label} · ลากมาวางบนโต๊ะ หรือแตะเพื่อดูรายละเอียด`:"ลากอุปกรณ์จากชั้นมาวางบนโต๊ะ · ลากพื้นที่ว่างเพื่อหมุนกล้อง");
     };
     const pointerLeave=()=>{hoveredId=null;highlight();};
-    const contextLost = (event: Event) => { event.preventDefault(); setUnavailable(true); };
-    renderer.domElement.addEventListener("pointerdown", pointerDown); renderer.domElement.addEventListener("pointerup", pointerUp); renderer.domElement.addEventListener("webglcontextlost", contextLost);
+    const contextLost = (event: Event) => { event.preventDefault(); cancelDrag(); setUnavailable(true); };
+    const cancelPointer = (event: PointerEvent) => { if (drag?.pointerId === event.pointerId) cancelDrag(); };
+    const cancelHidden = () => { if (document.hidden) cancelDrag(); };
+    const cancelKey = (event: KeyboardEvent) => { if (event.key === "Escape") cancelDrag(); };
+    // Capture phase prevents OrbitControls from starting a camera gesture on a tool.
+    canvas.addEventListener("pointerdown", pointerDown, true); canvas.addEventListener("pointerup", pointerUp); canvas.addEventListener("webglcontextlost", contextLost);
+    canvas.addEventListener("pointercancel", cancelPointer); canvas.addEventListener("lostpointercapture", cancelPointer);
+    window.addEventListener("blur", cancelDrag); window.addEventListener("keydown", cancelKey); document.addEventListener("visibilitychange", cancelHidden);
     renderer.domElement.addEventListener("pointermove",pointerMove);renderer.domElement.addEventListener("pointerleave",pointerLeave);
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const animate = (time: number) => { if (stopped) return; frame = requestAnimationFrame(animate); if (time - lastFrame < 50 || !visible || document.hidden) return; lastFrame = time; if (busyRef.current && !reducedMotion) { sample.rotation.z = Math.sin(time * .006) * .025; render(); } else if (sample.rotation.z !== 0) { sample.rotation.z = 0; render(); } };
     frame = requestAnimationFrame(animate);
-    return () => { stopped = true; cancelAnimationFrame(frame); runtime.current = null; observer.disconnect(); visibility.disconnect(); document.removeEventListener("visibilitychange", render); controls.dispose(); renderer.domElement.removeEventListener("pointerdown", pointerDown); renderer.domElement.removeEventListener("pointerup", pointerUp); renderer.domElement.removeEventListener("pointermove",pointerMove);renderer.domElement.removeEventListener("pointerleave",pointerLeave); renderer.domElement.removeEventListener("webglcontextlost", contextLost); release(scene); renderer.dispose(); renderer.domElement.remove(); };
+    return () => { stopped = true; cancelDrag(); cancelAnimationFrame(frame); runtime.current = null; observer.disconnect(); visibility.disconnect(); document.removeEventListener("visibilitychange", render); controls.dispose(); canvas.removeEventListener("pointerdown", pointerDown, true); canvas.removeEventListener("pointercancel", cancelPointer); canvas.removeEventListener("lostpointercapture", cancelPointer); window.removeEventListener("blur", cancelDrag); window.removeEventListener("keydown", cancelKey); document.removeEventListener("visibilitychange", cancelHidden); renderer.domElement.removeEventListener("pointerup", pointerUp); renderer.domElement.removeEventListener("pointermove",pointerMove);renderer.domElement.removeEventListener("pointerleave",pointerLeave); renderer.domElement.removeEventListener("webglcontextlost", contextLost); release(scene); renderer.dispose(); renderer.domElement.remove(); };
   }, [equipmentKey]);
 
   return <section className="virtual-lab" aria-label="ห้องแล็บเสมือนสามมิติ">
-    <div className="virtual-lab-heading"><div><span className="lab-3d-badge">3D LAB</span><h2>โต๊ะทดลองของฉัน</h2></div><span>ลากเพื่อหมุน · ใช้ปุ่ม + / − เพื่อซูม</span></div>
+    <div className="virtual-lab-heading"><div><span className="lab-3d-badge">3D LAB</span><h2>โต๊ะทดลองของฉัน</h2></div><span>ลากอุปกรณ์เพื่อวาง · ลากพื้นที่ว่างเพื่อหมุน · + / − เพื่อซูม</span></div>
     <div className="virtual-lab-viewport" ref={host} />
     {unavailable && <div className="virtual-lab-fallback" role="status">อุปกรณ์นี้เปิดภาพ 3 มิติไม่ได้ ยังเลือกอุปกรณ์และเรียงขั้นตอนจากรายการด้านล่างได้ตามปกติ</div>}
     <div className="virtual-lab-toolbar"><p role="status">{message}</p><div><button type="button" onClick={() => runtime.current?.zoom(.85)} aria-label="ซูมเข้า" disabled={unavailable}><Plus size={18}/></button><button type="button" onClick={() => runtime.current?.zoom(1.18)} aria-label="ซูมออก" disabled={unavailable}><Minus size={18}/></button><button type="button" onClick={() => runtime.current?.top()} aria-label="มองโต๊ะจากด้านบน" disabled={unavailable}><Maximize2 size={18}/></button><button type="button" onClick={() => runtime.current?.reset()} aria-label="คืนมุมมองเริ่มต้น" disabled={unavailable}><RotateCcw size={18}/></button></div></div>

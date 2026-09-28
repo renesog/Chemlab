@@ -31,9 +31,9 @@ export function ChallengeWorkbench({ level, selected, onAdd, onRemove, onReorder
   return <div className="lab-workspace-3d">
     <div className="lab-guide-bar"><ol aria-label="วิธีทดลอง"><li><b>1</b>เลือกอุปกรณ์</li><li><b>2</b>จัดลำดับในถาด</li><li><b>3</b>ทดลองและดูผล</li></ol><button type="button" onClick={()=>setHelpOpen(true)}><CircleHelp size={18}/>วิธีเล่น</button></div>
     <div className="lab-interaction-grid">
-      <LabScene3D equipment={level.equipment} selected={selected} focusedId={focusedId} onInspect={setFocusedId} busy={busy}/>
+      <LabScene3D equipment={level.equipment} selected={selected} focusedId={focusedId} onInspect={setFocusedId} onAdd={add} busy={busy}/>
       <aside className="lab-inventory" aria-label="เลือกอุปกรณ์และขั้นตอน">
-        <header><span className="eyebrow">เลือกแล้วเพิ่มลงถาด</span><h2>อุปกรณ์และวิธีทดลอง</h2><p>แตะรายการเพื่อดูรายละเอียด หรือเลือกจากฉาก 3 มิติ</p></header>
+        <header><span className="eyebrow">เลือกแล้วเพิ่มลงถาด</span><h2>อุปกรณ์และวิธีทดลอง</h2><p>ลากอุปกรณ์ในฉากมาวางบนโต๊ะเพื่อเพิ่มขั้นตอน หรือแตะรายการแล้วกดเพิ่มลงถาด</p></header>
         <div className="lab-inventory-list">{level.equipment.map((item,index)=><button type="button" key={item.id} className={focusedId===item.id?"is-focused":""} aria-pressed={focusedId===item.id} disabled={busy} draggable={!busy} onDragStart={event=>{event.dataTransfer.setData("equipment-id",item.id);event.dataTransfer.effectAllowed="copy"}} onClick={()=>setFocusedId(item.id)}><span className="inventory-tool"><ToolIcon id={item.id}/><small>{index+1}</small></span><span>{item.label}</span>{selected.includes(item.id)&&<span className="inventory-added"><Check size={14}/>ในถาด</span>}</button>)}</div>
         <div className="lab-object-info" aria-live="polite">{focused?<><div className="lab-object-title"><ToolIcon id={focused.id}/><h3>{focused.label}</h3></div><p>{labToolDescription(focused.id,focused.label)}</p><button className="primary-button" type="button" disabled={busy||selected.includes(focused.id)} onClick={()=>add(focused.id)}>{selected.includes(focused.id)?<><Check size={17}/>อยู่ในถาดแล้ว</>:<><Plus size={17}/>เพิ่มไปยังถาดทดลอง</>}</button></>:<><FlaskConical size={24}/><h3>เริ่มจากเลือกอุปกรณ์สักชิ้น</h3><p>ชื่อและวิธีใช้จะแสดงตรงนี้ ก่อนเพิ่มไปยังถาดทดลอง</p></>}</div>
       </aside>
