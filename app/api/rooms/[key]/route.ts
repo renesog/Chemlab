@@ -1,12 +1,14 @@
 export const dynamic = "force-dynamic";
-import { findRoom, json, mutateRoom, parseRoom, rateAllowed } from "@/db/live-rooms";
+import { findRoom, json, mutateRoom, mutateAttempt, parseRoom, rateAllowed } from "@/db/live-rooms";
 import { adminDb } from "@/lib/firebase/admin";
 import type { ActivityConfig, Classroom, Student } from "@/lib/types";
-import { explanationFor, scoreForAttempts, scoreForCustomAttempts, validateSequence } from "@/lib/game";
+import { evaluateAttempt, skipChallenge } from "@/lib/attempt-engine";
+import { beginLevel, transitionActivity } from "@/lib/level-clock";
+import { progressiveHint } from "@/lib/game";
 import { getTeacherUser } from "@/lib/auth";
 import { findQuestionKeys } from "@/db/question-keys";
 
-type Body = { action: string; token?: string; nickname?: string; deskId?: string; studentId?: string; status?: Classroom["status"]; activity?: ActivityConfig; locked?: boolean; levelId?: number; steps?: string[] };
+type Body = { action: string; requestId?: string; token?: string; nickname?: string; deskId?: string; studentId?: string; status?: Classroom["status"]; activity?: ActivityConfig; locked?: boolean; levelId?: number; steps?: string[] };
 
 export async function GET(_: Request, { params }: { params: Promise<{ key: string }> }) {
   const { key } = await params;
@@ -60,7 +62,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ ke
     const current = parseRoom(row);
     const student = current.students.find(item => item.id === session!.student_id);
     if (!current.activity.hintsEnabled || current.status !== "RUNNING" || !student || student.currentLevel !== body.levelId || student.completed.includes(body.levelId!) || student.skipped?.includes(body.levelId!)) return json({ error: "คำใบ้ยังไม่พร้อม" }, 403);
-    const hint = current.activity.mode === "QUESTIONS" ? (await findQuestionKeys(row.id))[String(body.levelId)]?.hint : presetHint(body.levelId!);
+    const hint = current.activity.mode === "QUESTIONS" ? (await findQuestionKeys(row.id))[String(body.levelId)]?.hint : progressiveHint(body.levelId!, current.catalogVersion === 2 ? 2 : 1, student.attemptsByLevel?.[body.levelId!] ?? 0);
     return hint ? json({ hint }) : json({ error: "ข้อสอบนี้ไม่มีคำใบ้" }, 404);
   }
 
@@ -71,59 +73,39 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ ke
       if (!session || !Number.isInteger(body.levelId)) return json({ error: "ข้อมูลข้อที่ข้ามไม่ถูกต้อง" }, 400);
       if (!(await rateAllowed(`skip:${row.id}:${session.student_id}`, 12))) return json({ error: "ข้ามข้อถี่เกินไป กรุณารอสักครู่" }, 429);
       const room = await mutateRoom(row.id, current => {
-        const student = current.students.find(item => item.id === session!.student_id);
-        const levelId = body.levelId!;
-        if (current.status !== "RUNNING" || Date.now() < (current.gameStartsAt ?? 0) || !student?.deskId || student.currentLevel !== levelId || !current.activity.levelIds.includes(levelId) || student.completed.includes(levelId) || student.skipped?.includes(levelId)) throw new Error("activity_unavailable");
-        if ((student.attemptsByLevel?.[levelId] ?? 0) < 1) throw new Error("skip_requires_attempt");
-        const index = current.activity.levelIds.indexOf(levelId);
-        return { ...current, students: current.students.map(item => item.id === student.id ? { ...item, skipped: [...(item.skipped ?? []), levelId], currentLevel: current.activity.levelIds[index + 1] ?? levelId } : item) };
+        return skipChallenge(current, session!.student_id, body.levelId!);
       });
       return json({ room });
     }
     if (body.action === "attempt" && !teacher) {
-      if (!session || !Number.isInteger(body.levelId) || !Array.isArray(body.steps) || body.steps.length > 12 || body.steps.some(step => typeof step !== "string" || step.length > 50)) return json({ error: "คำตอบไม่ถูกต้อง" }, 400);
+      if (!session || typeof body.requestId !== "string" || !/^[a-zA-Z0-9-]{16,64}$/.test(body.requestId) || !Number.isInteger(body.levelId) || !Array.isArray(body.steps) || body.steps.length === 0 || body.steps.length > 12 || body.steps.some(step => typeof step !== "string" || step.length > 50)) return json({ error: "คำตอบไม่ถูกต้อง" }, 400);
       const answerKeys = parseRoom(row).activity.mode === "QUESTIONS" ? await findQuestionKeys(row.id) : {};
-      let outcome = { correct: false, feedback: "", score: 1, explanation: "" };
-      const room = await mutateRoom(row.id, current => {
-        const student = current.students.find(s => s.id === session!.student_id);
-        const levelId = body.levelId!;
-        if (current.status !== "RUNNING" || Date.now() < (current.gameStartsAt ?? 0) || !student?.deskId || student.currentLevel !== levelId || !current.activity.levelIds.includes(levelId) || student.completed.includes(levelId) || student.skipped?.includes(levelId)) throw new Error("activity_unavailable");
-        const custom = current.activity.mode === "QUESTIONS" ? current.activity.customQuestions?.find(question => question.id === levelId) : undefined;
-        const key = custom ? answerKeys[String(levelId)] : undefined;
-        if (custom && !key) throw new Error("missing_answer_key");
-        const correct = custom ? key!.steps.length === body.steps!.length && key!.steps.every((step, index) => step === body.steps![index]) : validateSequence(levelId, body.steps!, current.catalogVersion === 2 ? 2 : 1);
-        const attempts = (student.attemptsByLevel?.[levelId] ?? 0) + (correct ? 0 : 1);
-        const score = custom ? scoreForCustomAttempts(attempts, custom.correctPoints, custom.wrongPenalty, custom.maxPoints) : scoreForAttempts(attempts, current.activity.pointsByLevel[levelId] ?? 5);
-        const index = current.activity.levelIds.indexOf(levelId);
-        outcome = { correct, score, feedback: correct ? `แยกสารสำเร็จ ได้ ${score} คะแนนในข้อนี้` : `แผนยังไม่ถูกต้อง คะแนนที่ยังได้ ${score} — ลองปรับอุปกรณ์หรือลำดับแล้วทดลองใหม่`, explanation: correct ? (custom ? key!.explanation : explanationFor(levelId, current.catalogVersion === 2 ? 2 : 1)) : "" };
-        return { ...current, students: current.students.map(s => s.id === student.id ? { ...s, wrongAttempts: s.wrongAttempts + (correct ? 0 : 1), attemptsByLevel: { ...s.attemptsByLevel, [levelId]: attempts }, totalScore: s.totalScore + (correct ? score : 0), completed: correct ? [...s.completed, levelId] : s.completed, currentLevel: correct ? current.activity.levelIds[index + 1] ?? levelId : s.currentLevel } : s) };
+      const result = await mutateAttempt(row.id, session.student_id, body.requestId!, JSON.stringify([body.levelId, body.steps]), current => {
+        return evaluateAttempt(current, session!.student_id, body.levelId!, body.steps!, answerKeys);
       });
-      return json({ room, ...outcome });
+      return json(result);
     }
     const room = await mutateRoom(row.id, current => applyAction(current, body, teacher, session?.student_id));
     return json({ room });
   } catch (error) {
     const message = error instanceof Error ? error.message : "update_failed";
+    if (message === "request_conflict") return json({ error: "รหัสคำขอถูกใช้กับคำตอบอื่นแล้ว กรุณาโหลดหน้าใหม่" }, 409);
     return json({ error: message === "desk_unavailable" ? "โต๊ะนี้ไม่ว่าง กรุณาเลือกโต๊ะอื่น" : message === "desk_locked" ? "ครูล็อกโต๊ะนี้แล้ว จึงยังย้ายไม่ได้" : message === "skip_requires_attempt" ? "ลองส่งคำตอบอย่างน้อยหนึ่งครั้งก่อนข้ามข้อนี้" : "อัปเดตห้องไม่สำเร็จ กรุณาลองอีกครั้ง" }, 409);
   }
 }
 
 function applyAction(room: Classroom, body: Body, teacher: boolean, studentId?: string) {
   if (teacher) {
-    if (body.action === "status" && body.status && ["OPEN", "RUNNING", "PAUSED", "ENDED"].includes(body.status) && room.status !== "ENDED") return { ...room, status: body.status, gameStartsAt: body.status === "RUNNING" && room.status !== "RUNNING" ? Date.now() + 6000 : room.gameStartsAt };
-    if (body.action === "activity" && body.activity && room.status === "OPEN" && typeof body.activity.title === "string" && body.activity.title.trim().length >= 2 && body.activity.title.length <= 60 && ["PRESET", "CUSTOM"].includes(body.activity.mode) && Array.isArray(body.activity.levelIds) && body.activity.levelIds.length > 0 && body.activity.levelIds.length <= 8 && new Set(body.activity.levelIds).size === body.activity.levelIds.length && body.activity.levelIds.every(id => Number.isInteger(id) && id >= 1 && id <= 8 && Number.isInteger(body.activity!.pointsByLevel[id]) && body.activity!.pointsByLevel[id] >= 1 && body.activity!.pointsByLevel[id] <= 20)) return { ...room, activity: { mode: body.activity.mode, title: body.activity.title, levelIds: body.activity.levelIds, pointsByLevel: body.activity.pointsByLevel, hintsEnabled: body.activity.hintsEnabled === true }, students: room.students.map(s => ({ ...s, currentLevel: body.activity!.levelIds[0], totalScore: 0, wrongAttempts: 0, attemptsByLevel: {}, completed: [], skipped: [] })) };
+    if (body.action === "status" && body.status && ["OPEN", "RUNNING", "PAUSED", "ENDED"].includes(body.status) && room.status !== "ENDED") return transitionActivity(room, body.status);
+    if (body.action === "activity" && body.activity && room.status === "OPEN" && typeof body.activity.title === "string" && body.activity.title.trim().length >= 2 && body.activity.title.length <= 60 && ["PRESET", "CUSTOM"].includes(body.activity.mode) && Array.isArray(body.activity.levelIds) && body.activity.levelIds.length > 0 && body.activity.levelIds.length <= 8 && new Set(body.activity.levelIds).size === body.activity.levelIds.length && body.activity.levelIds.every(id => Number.isInteger(id) && id >= 1 && id <= 8 && Number.isInteger(body.activity!.pointsByLevel[id]) && body.activity!.pointsByLevel[id] >= 1 && body.activity!.pointsByLevel[id] <= 20)) return { ...room, activity: { mode: body.activity.mode, title: body.activity.title, levelIds: body.activity.levelIds, pointsByLevel: body.activity.pointsByLevel, hintsEnabled: body.activity.hintsEnabled === true }, students: room.students.map(s => ({ ...s, currentLevel: body.activity!.levelIds[0], totalScore: 0, wrongAttempts: 0, attemptsByLevel: {}, resultsByLevel: {}, levelClock: undefined, completed: [], skipped: [] })) };
     if (body.action === "deskLock" && body.deskId && typeof body.locked === "boolean") return { ...room, desks: room.desks.map(d => d.id === body.deskId ? { ...d, locked: body.locked! } : d) };
     if (body.action === "allLocks" && typeof body.locked === "boolean") return { ...room, desks: room.desks.map(d => ({ ...d, locked: body.locked! })) };
     if (body.action === "moveStudent" && body.studentId && body.deskId) { const student = room.students.find(s => s.id === body.studentId); const target = room.desks.find(d => d.id === body.deskId); if (!student || !target || target.occupantId && target.occupantId !== student.id) throw new Error("desk_unavailable"); return { ...room, desks: room.desks.map(d => d.id === target.id ? { ...d, occupantId: student.id } : d.occupantId === student.id ? { ...d, occupantId: undefined } : d), students: room.students.map(s => s.id === student.id ? { ...s, deskId: target.id } : s) }; }
     throw new Error("invalid_teacher_action");
   }
   if (!studentId) throw new Error("unauthorized");
+  if (body.action === "begin" && Number.isInteger(body.levelId)) return beginLevel(room, studentId, body.levelId!);
   if (body.action === "hand") return { ...room, students: room.students.map(s => s.id === studentId ? { ...s, handRaised: !s.handRaised } : s) };
   if (body.action === "desk" && body.deskId) { const student = room.students.find(s => s.id === studentId); const current = room.desks.find(d => d.occupantId === studentId); const target = room.desks.find(d => d.id === body.deskId); if (!student || !target || target.locked || target.occupantId && target.occupantId !== studentId) throw new Error("desk_unavailable"); if (current?.locked) throw new Error("desk_locked"); return { ...room, desks: room.desks.map(d => d.id === target.id ? { ...d, occupantId: studentId } : d.occupantId === studentId ? { ...d, occupantId: undefined } : d), students: room.students.map(s => s.id === studentId ? { ...s, deskId: target.id } : s) }; }
   throw new Error("invalid_student_action");
-}
-
-function presetHint(levelId: number) {
-  const hints: Record<number, string> = { 1: "ลองนึกว่าสารชนิดใดถูกแม่เหล็กดูด", 2: "ลองเลือกวิธีใดวิธีหนึ่งให้ครบก่อน: ใช้ความต่างของการละลาย หรือการระเหิด", 3: "สารใดละลายน้ำ และสารใดลอยอยู่", 4: "สังเกตขนาดอนุภาคของสารทั้งสอง", 5: "คิดถึงสิ่งที่ผ่านกระดาษกรองได้", 6: "หากน้ำหายไป จะเหลือสารใด", 7: "ของเหลวสองชนิดแยกเป็นกี่ชั้น", 8: "เริ่มจากแยกสารที่ตอบสนองต่อแม่เหล็ก" };
-  return hints[levelId] ?? "สังเกตสมบัติที่ต่างกันของสารก่อนเลือกวิธีแยก";
 }

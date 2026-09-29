@@ -1232,3 +1232,5 @@ body{font-size:16px;line-height:1.55;background:linear-gradient(180deg,#f8fbfd 0
 /* Student identification uses names only. */
 .student-welcome{grid-template-columns:minmax(0,1fr) auto}
 @media(max-width:650px){.student-welcome{grid-template-columns:1fr}.teacher-live .leaderboard li{grid-template-columns:28px minmax(0,1fr) auto}.teacher-live .leader-progress{grid-column:2}.teacher-live .leader-score,.teacher-live .leaderboard .hand-badge{grid-column:3}}
+
+.level-results{margin:20px 0;text-align:left;max-width:100%}.level-results .table-wrap{overflow-x:auto}.level-results table{width:100%;min-width:520px}.level-results caption{text-align:left;font-weight:700;padding:12px 0}.level-results p{font-size:.78rem;color:var(--muted)}.level-report{margin-top:20px}.level-report details{padding:14px 0;border-top:1px solid var(--line)}.level-report summary{cursor:pointer;color:var(--navy);font-weight:700}

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import type { ActivityConfig, Classroom, Desk, Student, TeacherProfile } from "./types";
 import { WebMcpTools } from "./webmcp";
@@ -16,7 +16,7 @@ function desks(count=12){return Array.from({length:count},(_,i)=>({id:`desk-${i+
 const seed:Classroom[]=[];
 function normalizeRooms(value:Classroom[]){return value.map(room=>({...room,activity:room.activity??defaultActivity}))}
 type Session={roomId:string;studentId:string;token?:string};
-type Store={ready:boolean;rooms:Classroom[];profile:TeacherProfile|null;currentStudent?:Session;error:string;canManage(roomId:string):boolean;teacherToken(roomId:string):string|undefined;createRoom(input:{name:string;subject:string;count:number;layout:Classroom["layout"];customDesks?:Desk[]}):Promise<Classroom>;deleteRoom(roomId:string):Promise<void>;join(code:string,nickname:string):Promise<{room:Classroom;student:Student}|null>;selectDesk(deskId:string):Promise<{ok:boolean;message:string}>;toggleHand():Promise<void>;getHint(levelId:number):Promise<string>;setRoomStatus(roomId:string,status:Classroom["status"]):Promise<void>;configureActivity(roomId:string,activity:ActivityConfig):Promise<void>;setDeskLock(roomId:string,deskId:string,locked:boolean):Promise<void>;setAllLocks(roomId:string,locked:boolean):Promise<void>;moveStudent(roomId:string,studentId:string,deskId:string):Promise<void>;submitAttempt(levelId:number,steps:string[]):Promise<{correct:boolean;feedback:string;score:number;explanation:string}>;skipLevel(levelId:number):Promise<void>;saveProfile(profile:TeacherProfile):void};
+type Store={ready:boolean;rooms:Classroom[];profile:TeacherProfile|null;currentStudent?:Session;error:string;canManage(roomId:string):boolean;teacherToken(roomId:string):string|undefined;createRoom(input:{name:string;subject:string;count:number;layout:Classroom["layout"];customDesks?:Desk[]}):Promise<Classroom>;deleteRoom(roomId:string):Promise<void>;join(code:string,nickname:string):Promise<{room:Classroom;student:Student}|null>;selectDesk(deskId:string):Promise<{ok:boolean;message:string}>;toggleHand():Promise<void>;getHint(levelId:number):Promise<string>;beginLevel(levelId:number):Promise<void>;setRoomStatus(roomId:string,status:Classroom["status"]):Promise<void>;configureActivity(roomId:string,activity:ActivityConfig):Promise<void>;setDeskLock(roomId:string,deskId:string,locked:boolean):Promise<void>;setAllLocks(roomId:string,locked:boolean):Promise<void>;moveStudent(roomId:string,studentId:string,deskId:string):Promise<void>;submitAttempt(levelId:number,steps:string[]):Promise<{correct:boolean;feedback:string;score:number;explanation:string}>;skipLevel(levelId:number):Promise<void>;saveProfile(profile:TeacherProfile):void};
 const Context=createContext<Store|null>(null);
 class RequestFailure extends Error{constructor(message:string,readonly status:number){super(message)}}
 const TEACHER_ID_KEY="chemclass-teacher-id";
@@ -47,6 +47,8 @@ async function request<T>(path:string,method="GET",body?:unknown,signal?:AbortSi
 
 export function DemoProvider({children}:{children:React.ReactNode}){
   const pathname=usePathname();
+  const attemptsInFlight=useRef(new Map<string, Promise<{correct:boolean;feedback:string;score:number;explanation:string}>>());
+  const pendingIds=useRef(new Map<string,string>());
   const [rooms,setRooms]=useState<Classroom[]>(seed);
   const [currentStudent,setCurrentStudent]=useState<Session|undefined>();
   const [tokens,setTokens]=useState<Record<string,string>>({});
@@ -79,7 +81,7 @@ export function DemoProvider({children}:{children:React.ReactNode}){
         localStorage.removeItem(SESSION);
         setRooms(current=>current.filter(room=>room.id!==session!.roomId));
         setError("ห้องเรียนหรือเซสชันเดิมหมดอายุ กรุณาสแกน QR หรือเปิดลิงก์ห้องล่าสุดอีกครั้ง");
-      }else if(!cancelled&&session)setError("ตรวจสอบห้องเรียนไม่ได้ กรุณาเชื่อมต่ออินเทอร์เน็ตแล้วโหลดหน้านี้ใหม่");
+      }else if(!cancelled&&session){setCurrentStudent(session);setError("กำลังใช้ข้อมูลล่าสุดที่บันทึกไว้ กรุณาเชื่อมต่ออินเทอร์เน็ตเพื่ออัปเดตห้อง");}
     }finally{if(!cancelled)setReady(true)}
   })();return()=>{cancelled=true}},[putRoom]);
   useEffect(()=>{if(!ready)return;const timer=setTimeout(()=>localStorage.setItem(KEY,JSON.stringify(rooms)),600);return()=>clearTimeout(timer)},[rooms,ready]);
@@ -155,6 +157,11 @@ export function DemoProvider({children}:{children:React.ReactNode}){
   const join:Store["join"]=async(code,nickname)=>{try{setError("");const data=await request<{room:Classroom;student:Student;token:string}>(`/api/rooms/${encodeURIComponent(code.toUpperCase())}`,"PATCH",{action:"join",nickname});putRoom(data.room);const session={roomId:data.room.id,studentId:data.student.id,token:data.token};setCurrentStudent(session);localStorage.setItem(SESSION,JSON.stringify(session));return data}catch(e){setError(e instanceof Error?e.message:"เข้าห้องไม่ได้");return null}};
   const studentAction=async(action:string,details:Record<string,unknown>={})=>{if(!currentStudent?.token)throw new Error("กรุณาสแกน QR เข้าห้องอีกครั้ง");const data=await request<{room:Classroom}>(`/api/rooms/${currentStudent.roomId}`,"PATCH",{action,token:currentStudent.token,...details});putRoom(data.room)};
   const teacherAction=async(roomId:string,action:string,details:Record<string,unknown>={})=>{const token=tokens[roomId];if(!token&&!ownedRoomIds.includes(roomId))throw new Error("คุณไม่มีสิทธิ์จัดการห้องนี้");const data=await request<{room:Classroom}>(`/api/rooms/${roomId}`,"PATCH",{action,token,...details});putRoom(data.room)};
+  const beginLevel=useCallback(async(levelId:number)=>{
+    if(!currentStudent?.token) return;
+    const data=await request<{room:Classroom}>(`/api/rooms/${currentStudent.roomId}`,"PATCH",{action:"begin",token:currentStudent.token,levelId});
+    putRoom(data.room);
+  },[currentStudent,putRoom]);
   const selectDesk:Store["selectDesk"]=async deskId=>{try{await studentAction("desk",{deskId});return{ok:true,message:"เลือกที่นั่งเรียบร้อย (โต๊ะยังไม่ถูกล็อก)"}}catch(e){return{ok:false,message:e instanceof Error?e.message:"เลือกโต๊ะไม่ได้"}}};
   const toggleHand=()=>studentAction("hand");
   const getHint:Store["getHint"]=async levelId=>{if(!currentStudent?.token)throw new Error("กรุณาสแกน QR เข้าห้องอีกครั้ง");const data=await request<{hint:string}>(`/api/rooms/${currentStudent.roomId}`,"PATCH",{action:"hint",token:currentStudent.token,levelId});return data.hint};
@@ -163,13 +170,34 @@ export function DemoProvider({children}:{children:React.ReactNode}){
   const setDeskLock=(roomId:string,deskId:string,locked:boolean)=>teacherAction(roomId,"deskLock",{deskId,locked});
   const setAllLocks=(roomId:string,locked:boolean)=>teacherAction(roomId,"allLocks",{locked});
   const moveStudent=(roomId:string,studentId:string,deskId:string)=>teacherAction(roomId,"moveStudent",{studentId,deskId});
-  const submitAttempt:Store["submitAttempt"]=async(levelId,steps)=>{if(!currentStudent?.token)throw new Error("กรุณาสแกน QR เข้าห้องอีกครั้ง");const data=await request<{room:Classroom;correct:boolean;feedback:string;score:number;explanation:string}>(`/api/rooms/${currentStudent.roomId}`,"PATCH",{action:"attempt",token:currentStudent.token,levelId,steps});putRoom(data.room);return data};
+  const submitAttempt:Store["submitAttempt"]=(levelId,steps)=>{
+    if(!currentStudent?.token)return Promise.reject(new Error("กรุณาสแกน QR เข้าห้องอีกครั้ง"));
+    const session=currentStudent;
+    const key="chemclass-attempt:"+JSON.stringify([session.roomId,session.studentId,levelId,steps]);
+    const inFlight=attemptsInFlight.current.get(key);if(inFlight)return inFlight;
+    const run=(async()=>{
+      let requestId=pendingIds.current.get(key);
+      if(!requestId){try{requestId=localStorage.getItem(key)??undefined}catch{}}
+      requestId=requestId??crypto.randomUUID();pendingIds.current.set(key,requestId);
+      try{localStorage.setItem(key,requestId)}catch{throw new Error("บันทึกรหัสคำตอบไม่ได้ กรุณาอนุญาตพื้นที่จัดเก็บก่อนส่งคำตอบ");}
+      const data=await request<{room:Classroom;correct:boolean;feedback:string;score:number;explanation:string}>(
+        `/api/rooms/${session.roomId}`,"PATCH",{action:"attempt",token:session.token,levelId,steps,requestId},AbortSignal.timeout(20000));
+      putRoom(data.room);
+      // Ambiguous failures retain this ID, including across refreshes.
+      try{localStorage.removeItem(key)}catch{}
+      pendingIds.current.delete(key);
+      return data;
+    })();
+    attemptsInFlight.current.set(key,run);
+    void run.finally(()=>attemptsInFlight.current.delete(key)).catch(()=>{});
+    return run;
+  };
   const skipLevel:Store["skipLevel"]=async levelId=>{if(!currentStudent?.token)throw new Error("กรุณาสแกน QR เข้าห้องอีกครั้ง");const data=await request<{room:Classroom}>(`/api/rooms/${currentStudent.roomId}`,"PATCH",{action:"skip",token:currentStudent.token,levelId});putRoom(data.room)};
   const saveProfile:Store["saveProfile"]=useCallback(profile=>{
     setProfile(profile);
     try{localStorage.setItem("chemclass-teacher-profile",JSON.stringify(profile))}catch{}
   },[]);
-  const value={ready,rooms,profile,currentStudent,error,canManage:(roomId:string)=>!!tokens[roomId]||ownedRoomIds.includes(roomId),teacherToken:(roomId:string)=>tokens[roomId],createRoom,deleteRoom,join,selectDesk,toggleHand,getHint,setRoomStatus,configureActivity,setDeskLock,setAllLocks,moveStudent,submitAttempt,skipLevel,saveProfile};
+  const value={ready,rooms,profile,currentStudent,error,canManage:(roomId:string)=>!!tokens[roomId]||ownedRoomIds.includes(roomId),teacherToken:(roomId:string)=>tokens[roomId],createRoom,deleteRoom,join,selectDesk,toggleHand,getHint,beginLevel,setRoomStatus,configureActivity,setDeskLock,setAllLocks,moveStudent,submitAttempt,skipLevel,saveProfile};
   return <Context.Provider value={value}><WebMcpTools/>{children}</Context.Provider>;
 }
 export function useDemo(){const value=useContext(Context);if(!value)throw new Error("DemoProvider missing");return value}

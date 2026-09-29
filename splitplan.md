@@ -196,3 +196,17 @@
 - ปรับข้อความหน้าแรกและ QR พร้อม layout มือถือที่เดิมเว้นช่องสำหรับตัวละคร; โปรไฟล์ครูและระบบที่นั่ง/ยกมือ/คะแนนคงเดิม
 - Tests 20 / 20 ผ่าน; ESLint ไฟล์ที่แก้ไม่มี errors (หน้าแรกมี warning Dna unused เดิม); production build รวม TypeScript ผ่าน
 - ยังไม่ได้ตรวจเข้าห้อง/QR/เลือกที่นั่งบน browser จริง และยังไม่ยืนยัน Vercel deployment
+
+## บันทึกงาน 29 กันยายน 2026 — เล่นจนจบและกู้คืนเกม
+
+- แยกสถานะโหลด / รอครู / เลือกที่นั่ง / นับถอยหลัง / เล่น / พัก / ครูจบกิจกรรม / ทำครบแล้ว หน้า lab และห้องเรียนมีทางไปสรุปผลเมื่อครูปิดกิจกรรม
+- บันทึกลำดับอุปกรณ์ทันทีใน localStorage แยกห้อง นักเรียน และด่าน กู้คืนหลังรีเฟรช พร้อมตรวจ ID อุปกรณ์และแจ้งเมื่อเขียน storage ไม่ได้; ไม่เก็บตำแหน่ง 3D และไม่ซิงก์ข้ามเครื่อง
+- คำตอบมี request ID ที่คงไว้เมื่อ timeout/เครือข่ายล้มเหลว พร้อมรวมคำขอที่กำลังส่งซ้ำใน client; Firestore transaction เขียนคะแนนและ private attemptReceipts พร้อมกัน และคืนผลเดิมเมื่อ retry ID/payload เดิม
+- แยก attempt/skip domain logic ออกจาก route เพื่อทดสอบเส้นทางผิด → แก้ → ผ่านครบ 8 ด่าน, ข้ามครบ, pause/resume, จบด่านสุดท้าย, เรียกซ้ำและ draft recovery
+- เพิ่มคำแนะนำเมื่อเรียงลำดับผิดและคำใบ้ตามจำนวนครั้งที่ผิด รองรับหมายเลขด่านเก่า โดยไม่ส่งรายการเฉลยไปก่อนตรวจคำตอบ
+- บันทึกผลรายด่าน (คะแนน จำนวนครั้ง ตอบผิด เวลา และเวลาจบ) บน server; นาฬิกาไม่รีเซ็ตเมื่อ refresh และไม่นับช่วง teacher pause/countdown ข้อมูลเก่าที่ไม่มีเวลาแสดง —
+- แสดงรายละเอียดรายด่านฝั่งนักเรียนและครู พร้อม CSV รายด่านเพิ่มจากรายงานรวมเดิม
+- แก้ Firestore rules ใน source ให้ client อ่าน room สำหรับ realtime ได้ แต่เขียนผ่าน server เท่านั้น ปิดการอ่าน studentTokens / answerKeys โดยตรง; ยังต้อง deploy rules แยกจาก Vercel
+- กำหนด outputFileTracingRoot เป็นโปรเจกต์ แก้ build ที่ไปตาม lockfile นอก workspace จน EPERM
+- ตรวจผ่าน: tests 29 / 29, ESLint เฉพาะไฟล์ที่แก้, production build รวม TypeScript; รายละเอียด manual QA อยู่ใน docs/game-completion-qa.md
+- คงค้าง: ทดสอบเบราว์เซอร์ครู 1 + นักเรียน 2 / touch / การตัด response จริงและ Firestore transaction concurrency; cua.getState ไม่มี browsers, ไม่พบ Firebase CLI จึงยังไม่ deploy rules และยังไม่ยืนยัน Vercel deployment

@@ -6,12 +6,13 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/compone
 import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useGameClock } from "@/components/game-start-countdown";
 import { currentStudentFrom, useDemo } from "@/lib/demo-store";
-import { finishedLevels, gameIsLive } from "@/lib/live-game";
+import { labPhase, draftKey } from "@/lib/lab-session";
+import { useLabDraft } from "@/components/use-lab-draft";
 import { LEVELS } from "@/lib/levels";
 import { LEGACY_LEVELS } from "@/lib/legacy-levels";
 import { ArrowRight, CheckCircle2, CircleHelp, Lightbulb, Send, SkipForward, Trophy } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function Lab(){
   const store=useDemo();
@@ -23,7 +24,7 @@ export default function Lab(){
   const [success,setSuccess]=useState<{levelId:number;score:number;explanation:string}|null>(null);
   const levelIndex=Math.max(0,activeLevels.indexOf(success?.levelId??student?.currentLevel??activeLevels[0]));
   const level=catalog.find(item=>item.id===activeLevels[levelIndex])??catalog[0]??LEVELS[0];
-  const [selected,setSelected]=useState<string[]>([]);
+  const {selected,setSelected,clear:clearDraft,draftReady,warning}=useLabDraft(draftKey(room?.id??"",student?.id??"",level.id),level.equipment.map(item=>item.id));
   const [feedback,setFeedback]=useState<{ok:boolean;text:string}|null>(null);
   const [hint,setHint]=useState("");
   const [busy,setBusy]=useState(false);
@@ -33,9 +34,22 @@ export default function Lab(){
   const mistakes=student?.attemptsByLevel?.[level.id]??0;
   const score=customQuestion?Math.max(1,Math.min(maxPoints,customQuestion.correctPoints)-mistakes*customQuestion.wrongPenalty):Math.max(1,maxPoints-mistakes);
 
+  const beginLevel=store.beginLevel;
+  const shouldStartClock=store.ready&&!!room&&!!student&&labPhase(room,student,now)==="playing"&&!success&&!busy;
+  useEffect(()=>{
+    if(!shouldStartClock)return;
+    const start=()=>{void beginLevel(level.id).catch(()=>{});};
+    start();window.addEventListener("online",start);
+    return()=>window.removeEventListener("online",start);
+  },[beginLevel,level.id,shouldStartClock]);
+
+  if(!store.ready)return <AppShell title="ห้องทดลอง"><main className="empty-state" role="status">กำลังโหลดเกมที่บันทึกไว้…</main></AppShell>;
+  if((!room||!student)&&store.currentStudent&&store.error)return <AppShell title="ห้องทดลอง"><main className="empty-state"><h1>ยังโหลดเกมไม่ได้</h1><p>{store.error}</p><button className="primary-button" onClick={()=>window.location.reload()}>ลองเชื่อมต่ออีกครั้ง</button></main></AppShell>;
   if(!room||!student)return <AppShell title="ห้องทดลอง"><main className="empty-state"><h1>กรุณาเข้าห้องก่อน</h1><button className="primary-button" onClick={()=>router.push("/join")}>ใส่รหัสห้อง</button></main></AppShell>;
-  if(finishedLevels(student,activeLevels)&&!success)return <AppShell title="ห้องทดลอง"><main className="empty-state"><h1>ทำกิจกรรมครบแล้ว</h1><p>ดูคะแนน ข้อที่ผ่าน และข้อที่ข้ามได้ในหน้าสรุปผล</p><button className="primary-button" onClick={()=>router.push("/student/results")}>ดูสรุปผล</button></main></AppShell>;
-  if(!gameIsLive(room,now)||!student.deskId)return <AppShell title="ห้องทดลอง"><main className="empty-state"><h1>กำลังรอคุณครูเริ่มเกม</h1><button className="primary-button" onClick={()=>router.push("/student/classroom")}>กลับไปห้องเรียน</button></main></AppShell>;
+  if(labPhase(room,student,now)==="finished"&&!success)return <AppShell title="ห้องทดลอง"><main className="empty-state"><h1>ทำกิจกรรมครบแล้ว</h1><p>ดูคะแนน ข้อที่ผ่าน และข้อที่ข้ามได้ในหน้าสรุปผล</p><button className="primary-button" onClick={()=>router.push("/student/results")}>ดูสรุปผล</button></main></AppShell>;
+  const phase=labPhase(room,student,now);
+  if(phase!=="playing"&&!success)return <AppShell title="ห้องทดลอง"><main className="empty-state"><h1>{phase==="ended"?"คุณครูจบกิจกรรมแล้ว":phase==="paused"?"พักการทดลองชั่วคราว":phase==="seat"?"เลือกที่นั่งก่อนเริ่มทดลอง":phase==="countdown"?"เตรียมเริ่มการทดลอง":"กำลังรอคุณครูเริ่มเกม"}</h1><p>{phase==="ended"?"คะแนนที่ทำไว้ยังอยู่ ดูสรุปผลได้เลย":phase==="paused"?"แผนทดลองของคุณยังอยู่ เมื่อครูเริ่มต่อจะกลับมาเล่นได้":"กลับห้องเรียนเพื่อดูสถานะกิจกรรม"}</p><button className="primary-button" onClick={()=>router.push(phase==="ended"?"/student/results":"/student/classroom")}>{phase==="ended"?"ดูสรุปผล":"กลับห้องเรียน"}</button></main></AppShell>;
+  if(!draftReady)return <AppShell title="ห้องทดลอง"><main className="empty-state" role="status">กำลังกู้คืนแผนทดลอง…</main></AppShell>;
 
   function addStep(id:string){if(!level.equipment.some(item=>item.id===id))return;setSelected(old=>old.includes(id)?old:[...old,id]);setFeedback(null)}
   function removeStep(id:string){setSelected(s=>s.filter(x=>x!==id));setFeedback(null)}
@@ -50,7 +64,7 @@ export default function Lab(){
     setFeedback(null);
   }
 
-  function nextChallenge(){if(levelIndex===activeLevels.length-1){router.push("/student/results");return}setSelected([]);setFeedback(null);setHint("");setSuccess(null)}
+  function nextChallenge(){if(levelIndex===activeLevels.length-1){router.push("/student/results");return}setFeedback(null);setHint("");setSuccess(null)}
 
   async function submit(){
     if(!selected.length){setFeedback({ok:false,text:"เลือกขั้นตอนอย่างน้อย 1 ขั้นตอนก่อนส่งคำตอบ"});return;}
@@ -58,18 +72,19 @@ export default function Lab(){
     try{
       const data=await store.submitAttempt(level.id,selected);
       setFeedback({ok:data.correct,text:data.feedback});
-      if(data.correct)setSuccess({levelId:level.id,score:data.score,explanation:data.explanation});
-    }catch(error){setFeedback({ok:false,text:error instanceof Error?error.message:"เชื่อมต่อไม่ได้ ลองอีกครั้ง"})}
+      if(data.correct){clearDraft();setSuccess({levelId:level.id,score:data.score,explanation:data.explanation});}
+    }catch(error){setFeedback({ok:false,text:error instanceof Error&&!(error instanceof TypeError)&&error.name!=="TimeoutError"&&error.name!=="AbortError"?error.message:"ยังไม่ได้รับผล กรุณาส่งแผนเดิมอีกครั้ง ระบบจะไม่คิดคะแนนซ้ำ"})}
     finally{setBusy(false)}
   }
   async function skip(){
     setBusy(true);setFeedback(null);
-    try{await store.skipLevel(level.id);setSelected([]);setHint("");if(levelIndex===activeLevels.length-1)router.push("/student/results")}
+    try{await store.skipLevel(level.id);clearDraft();setHint("");if(levelIndex===activeLevels.length-1)router.push("/student/results")}
     catch(error){setFeedback({ok:false,text:error instanceof Error?error.message:"ข้ามข้อไม่ได้ กรุณาลองอีกครั้ง"})}
     finally{setBusy(false)}
   }
 
   return <AppShell title="ห้องทดลอง" back="/student/classroom"><main className="lab-shell guided-lab">
+    {warning&&<p className="error-box" role="status">{warning}</p>}
     {/* ── Header ── */}
     <header className="lab-header challenge-header">
       <div><p className="eyebrow">{room.activity.title} · ชาเลนจ์ {levelIndex+1}/{activeLevels.length}</p><h1>{level.title}</h1><p className="challenge-mixture">สารผสม: <strong>{level.mixture}</strong></p><p className="challenge-objective"><CircleHelp aria-hidden="true"/>{level.objective}</p></div>

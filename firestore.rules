@@ -2,19 +2,20 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /rooms/{roomId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if false;
       match /studentTokens/{tokenId} {
-        allow read, write: if true;
+        allow read, write: if false;
       }
       match /answerKeys/{keyId} {
-        allow read, write: if true;
+        allow read, write: if false;
       }
     }
     match /teacherProfiles/{uid} {
-      allow read, write: if true;
+      allow read, write: if false;
     }
     match /rateLimits/{key} {
-      allow read, write: if true;
+      allow read, write: if false;
     }
   }
 }

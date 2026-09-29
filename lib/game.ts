@@ -32,6 +32,30 @@ export function feedbackFor(levelId: number, submitted: string[]) {
   return "วิธีนี้ยังไม่ใช้สมบัติที่แตกต่างกันของสาร ลองสังเกตอีกครั้ง";
 }
 
+export function progressiveHint(levelId: number, version: 1 | 2, mistakes: number) {
+  const id = version === 1 ? ({1:1,2:4,3:5,4:6,5:2,6:7,7:3,8:8} as Record<number,number>)[levelId] : levelId;
+  const hints: Record<number, [string, string]> = {
+    1: ["สารทั้งสองตอบสนองต่อแรงดึงดูดเหมือนกันหรือไม่", "นึกถึงสมบัติที่แตกต่างกันของเหล็กกับผงถ่าน"],
+    2: ["เปรียบเทียบการละลายและการเปลี่ยนสถานะของสารทั้งสอง", "เลือกแนวทางเดียวให้ครบ และคิดว่าจะเก็บสารที่แยกออกมาอย่างไร"],
+    3: ["สารใดละลายในน้ำ และสารใดยังคงแยกอยู่", "พิจารณาสถานะของเทียนไข และวิธีเก็บสารที่ละลายอยู่กลับคืน"],
+    4: ["อนุภาคของสารทั้งสองมีขนาดเท่ากันหรือไม่", "ขนาดช่องของอุปกรณ์ควรให้สารชนิดหนึ่งผ่านและกักอีกชนิดไว้"],
+    5: ["สารใดผ่านวัสดุกรองได้ และสารใดควรถูกกักไว้", "ตรวจว่าชุดกรองและภาชนะรับพร้อมก่อนถ่ายสารหรือยัง"],
+    6: ["เมื่อของเหลวเปลี่ยนสถานะ สารที่ละลายอยู่จะไปอยู่ที่ใด", "คิดถึงภาชนะที่เหมาะกับความร้อน และขั้นตอนเก็บสารที่เหลือ"],
+    7: ["ของเหลวทั้งสองรวมเป็นเนื้อเดียวกันหรือแยกชั้น", "ปล่อยให้ชั้นของเหลวชัดเจนก่อน แล้วพิจารณาว่าควรนำชั้นใดออกก่อน"],
+    8: ["สารแต่ละชนิดมีสมบัติใดที่ช่วยแยกออกจากส่วนที่เหลือ", "ทบทวนหลังแต่ละขั้นว่าเหลือของแข็งหรือสารละลายใดที่ต้องแยกต่อ"],
+  };
+  const choices = hints[id];
+  return choices?.[mistakes >= 2 ? 1 : 0] ?? "ทบทวนสมบัติของสารและเป้าหมายการแยก";
+}
+
+export function reasoningFeedback(levelId: number, submitted: string[], version: 1 | 2, mistakes: number) {
+  const answers = (version === 1 ? LEGACY_ANSWERS : ANSWERS)[levelId] ?? [];
+  if (answers.some(answer => answer.length === submitted.length && answer.every(id => submitted.includes(id)) && new Set(submitted).size === submitted.length)) {
+    return "อุปกรณ์ที่เลือกใช้ได้ ลองตรวจลำดับว่าอะไรต้องเตรียมก่อน และอะไรควรทำหลัง";
+  }
+  return progressiveHint(levelId, version, mistakes);
+}
+
 export function explanationFor(levelId:number,catalogVersion:1|2=2){
   if(catalogVersion===1)return "วิธีที่เลือกใช้สมบัติที่แตกต่างกันของสาร จึงแยกส่วนผสมได้สำเร็จ";
   const explanations:Record<number,string>={

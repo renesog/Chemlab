@@ -1,6 +1,7 @@
 import { adminDb } from '@/lib/firebase/admin';
 import { FieldValue, type DocumentReference } from 'firebase-admin/firestore';
 import type { Classroom } from '@/lib/types';
+import { replayAttempt, type AttemptReceipt, type AttemptOutcome } from '@/lib/attempt-receipt';
 
 type RoomDoc = {
   id: string;
@@ -62,6 +63,26 @@ export async function mutateRoom(
 
 export function json(data: unknown, status = 200) {
   return Response.json(data, { status, headers: { 'cache-control': 'no-store' } });
+}
+
+// The receipt and score update commit together, including concurrent retries.
+// Receipts are private server data, never part of the public room snapshot.
+export async function mutateAttempt(key: string, studentId: string, requestId: string, fingerprint: string,
+  mutate: (room: Classroom) => { room: Classroom; outcome: AttemptOutcome }) {
+  const ref = adminDb.collection('rooms').doc(key);
+  const receiptRef = ref.collection('attemptReceipts').doc(`${studentId}_${requestId}`);
+  return adminDb.runTransaction(async tx => {
+    const snapshot = await tx.get(ref);
+    const saved = await tx.get(receiptRef);
+    if (!snapshot.exists) throw new Error('room_not_found');
+    const current = parseRoom(snapshot.data() as RoomDoc);
+    const replay = replayAttempt(saved.exists ? saved.data() as AttemptReceipt : undefined, fingerprint);
+    if (replay) return { room: current, ...replay };
+    const result = mutate(current);
+    tx.update(ref, { snapshot: JSON.stringify(result.room), version: FieldValue.increment(1), updatedAt: Date.now() });
+    tx.set(receiptRef, { fingerprint, outcome: result.outcome, createdAt: Date.now() });
+    return { room: result.room, ...result.outcome };
+  });
 }
 
 export async function rateAllowed(key: string, limitCount: number): Promise<boolean> {

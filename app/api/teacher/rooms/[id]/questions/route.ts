@@ -32,7 +32,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   const current = parseRoom(room);
   if (current.status !== "OPEN") return json({ error: "แก้โจทย์ได้ก่อนเริ่มเกมเท่านั้น" }, 409);
   const now = Date.now();
-  const updated = { ...current, activity: body.activity, students: current.students.map(student => ({ ...student, currentLevel: body.activity!.levelIds[0], totalScore: 0, wrongAttempts: 0, attemptsByLevel: {}, completed: [], skipped: [] })) };
+  const updated = { ...current, activity: body.activity, students: current.students.map(student => ({ ...student, currentLevel: body.activity!.levelIds[0], totalScore: 0, wrongAttempts: 0, attemptsByLevel: {}, resultsByLevel: {}, levelClock: undefined, completed: [], skipped: [] })) };
   const snapshot = JSON.stringify(updated);
   try {
     await adminDb.runTransaction(async (tx) => {
