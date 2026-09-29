@@ -1,105 +1,33 @@
 "use client";
-
-import { ArrowRight, CheckCircle2, FlaskConical, GraduationCap, Sparkles, UsersRound, Atom, Dna } from "lucide-react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { ArrowRight, GraduationCap, UsersRound } from "lucide-react";
+import { PublicShell } from "@/components/public-shell";
+import { ScienceDiagram } from "@/components/science-diagram";
 import { useDemo } from "@/lib/demo-store";
 
 export default function Home() {
-  const router = useRouter();
-  const store = useDemo();
-
-  return (
-    <main className="role-page modern-role-page">
-      {/* Decorative background ambient glows */}
-      <div className="ambient-glow glow-1" aria-hidden="true" />
-      <div className="ambient-glow glow-2" aria-hidden="true" />
-
-      <header className="brand-bar modern-brand-bar">
-        <div className="brand-mark" aria-hidden="true">
-          <FlaskConical size={24} />
-        </div>
-        <div>
-          <strong>ChemClass Lab</strong>
-          <span>ห้องเรียนวิทยาศาสตร์เสมือนจริง</span>
-        </div>
-        <div className="brand-badge" aria-hidden="true">
-          <Sparkles size={14} />
-          <span>Interactive Sim</span>
-        </div>
-      </header>
-
-      <section className="role-shell" aria-labelledby="role-heading">
-        <div className="role-intro">
-          <p className="eyebrow modern-eyebrow">
-            <Atom size={16} className="inline-icon" /> ยินดีต้อนรับสู่ห้องปฏิบัติการเคมี
-          </p>
-          <h1 id="role-heading">
-            วันนี้คุณเข้าห้องเรียน<br />ในบทบาทไหน?
-          </h1>
-          <p className="role-subheading">
-            แพลตฟอร์มจำลองการทดลองวิทยาศาสตร์แบบกระบวนการจริง เรียลไทม์ และไม่ต้องสมัครบัญชี
-          </p>
-        </div>
-
-        <div className="role-grid modern-role-grid">
-          {/* Card: Teacher */}
-          <button 
-            type="button"
-            className="role-card modern-role-card teacher" 
-            onClick={() => router.push(store.profile ? "/teacher/dashboard" : "/teacher/login")}
-          >
-            <div className="role-card-inner">
-              <div className="role-icon-wrapper">
-                <span className="role-icon">
-                  <GraduationCap size={36} />
-                </span>
-                <span className="role-chip teacher-chip">คุณครูผู้สอน</span>
-              </div>
-              <div className="role-copy">
-                <small>สำหรับผู้จัดกิจกรรม / คุณครู</small>
-                <strong>ฉันเป็นครู</strong>
-                <span>สร้างห้องเรียน ออกโจทย์ จัดผังโต๊ะ ล็อกที่นั่ง และติดตามผลคะแนนสด</span>
-                <span className="role-action-link">
-                  เข้าสู่ห้องเรียนครู <ArrowRight size={18} className="arrow-animated" />
-                </span>
-              </div>
-            </div>
-            <div className="card-shine" aria-hidden="true" />
-          </button>
-
-          {/* Card: Student */}
-          <button 
-            type="button"
-            className="role-card modern-role-card student" 
-            onClick={() => router.push("/join")}
-          >
-            <div className="role-card-inner">
-              <div className="role-icon-wrapper">
-                <span className="role-icon student-icon">
-                  <UsersRound size={36} />
-                </span>
-                <span className="role-chip student-chip">นักเรียน / ผู้เข้าสอบ</span>
-              </div>
-              <div className="role-copy">
-                <small>เข้าร่วมได้ทันที สะดวกรวดเร็ว</small>
-                <strong>ฉันเป็นนักเรียน</strong>
-                <span>สแกน QR หรือใส่รหัส 6 หลัก ตั้งชื่อ เลือกที่นั่ง และเริ่มแยกสาร</span>
-                <span className="role-action-link student-link">
-                  ใส่รหัสเข้าห้องเรียน <ArrowRight size={18} className="arrow-animated" />
-                </span>
-              </div>
-            </div>
-            <div className="card-shine" aria-hidden="true" />
-          </button>
-        </div>
-
-        {/* Value assurances */}
-        <div className="role-assurance modern-role-assurance">
-          <span><CheckCircle2 size={18} /> เข้าใช้งานได้ทันที ไม่ต้องกรอกรหัสผ่าน</span>
-          <span><CheckCircle2 size={18} /> รองรับสมาร์ตโฟน แท็บเล็ต และคอมพิวเตอร์</span>
-          <span><CheckCircle2 size={18} /> ซิงก์คะแนนและสถานะโต๊ะแบบเรียลไทม์</span>
-        </div>
-      </section>
-    </main>
-  );
+  const store=useDemo();
+  return <PublicShell><div className="entry-landing">
+    <section className="entry-identity" aria-labelledby="identity-title">
+      <p className="entry-kicker">ห้องเรียนวิทยาศาสตร์ / การแยกสาร</p>
+      <h1 id="identity-title">ChemClass<br/><span>Lab.</span></h1>
+      <p className="entry-manifesto">เริ่มจากความสงสัย<br/>หาคำตอบด้วยการทดลอง</p>
+      <ScienceDiagram/>
+      <p className="entry-identity-note">สังเกตสมบัติของสาร เลือกอุปกรณ์<br/>แล้วเรียงวิธีทดลองด้วยตัวเอง</p>
+    </section>
+    <section className="entry-actions" aria-labelledby="start-title">
+      <p className="entry-kicker">เลือกบทบาทของคุณ</p>
+      <h2 id="start-title">เริ่มต้นใช้งาน</h2>
+      <p className="entry-intro">หนึ่งห้องเรียน หลายการค้นพบ<br/>เลือกทางเข้าสำหรับคุณ</p>
+      <div className="entry-role-actions">
+        <Link href={store.profile?"/teacher/dashboard":"/teacher/login"} className="entry-role-row">
+          <GraduationCap aria-hidden="true"/><span><strong>ครูผู้สอน</strong><small>{store.profile?"กลับไปจัดการห้องเรียนของคุณ":"สร้างห้องและควบคุมกิจกรรม"}</small></span><ArrowRight aria-hidden="true"/>
+        </Link>
+        <Link href="/join" className="entry-role-row">
+          <UsersRound aria-hidden="true"/><span><strong>นักเรียน</strong><small>ใส่รหัสห้อง แล้วเริ่มทดลอง</small></span><ArrowRight aria-hidden="true"/>
+        </Link>
+      </div>
+      <p className="entry-footnote">นักเรียนใช้เพียงชื่อเล่นและรหัสจากคุณครู<br/>หรือเปิดลิงก์ห้องจาก QR Code</p>
+    </section>
+  </div></PublicShell>;
 }

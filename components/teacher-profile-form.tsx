@@ -3,7 +3,7 @@
 import type { TeacherProfile } from "@/lib/types";
 import { Atom, BookOpen, FlaskConical } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useId, useState } from "react";
 import { getStoredTeacherId, useDemo } from "@/lib/demo-store";
 
 const icons = [
@@ -31,10 +31,12 @@ export function TeacherProfileForm({
   initial,
   email,
   submitLabel,
+  entry = false,
 }: {
   initial?: TeacherProfile;
   email?: string;
   submitLabel: string;
+  entry?: boolean;
 }) {
   const router = useRouter();
   const store = useDemo();
@@ -43,9 +45,11 @@ export function TeacherProfileForm({
   );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const errorId = useId();
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (busy) return;
     setBusy(true);
     setError("");
     try {
@@ -72,14 +76,14 @@ export function TeacherProfileForm({
       router.refresh();
     } catch (cause) {
       console.error("Profile submit error:", cause);
-      setError(cause instanceof Error ? cause.message : "บันทึกโปรไฟล์ไม่สำเร็จ");
+      setError(entry && cause instanceof TypeError ? "ไม่สามารถเชื่อมต่อได้ กรุณาลองใหม่อีกครั้ง" : cause instanceof Error ? cause.message : "บันทึกโปรไฟล์ไม่สำเร็จ");
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <form className="form-stack teacher-profile-form" onSubmit={submit}>
+    <form className="form-stack teacher-profile-form" onSubmit={submit} aria-busy={busy} data-entry={entry || undefined}>
       {email && <p className="muted">บัญชี {email}</p>}
       <div className="profile-preview">
         <TeacherProfileBadge profile={draft} />
@@ -96,11 +100,13 @@ export function TeacherProfileForm({
           minLength={2}
           maxLength={32}
           required
+          disabled={entry && busy}
+          aria-describedby={error ? errorId : undefined}
           placeholder="เช่น ครูสมศรี, ครูจูเลีย"
-          autoFocus
+          autoFocus={!entry}
         />
       </label>
-      <fieldset>
+      <fieldset disabled={entry && busy}>
         <legend>ไอคอนประจำตัว</legend>
         <div className="profile-choices">
           {icons.map(({ id, label, Icon }) => (
@@ -117,7 +123,7 @@ export function TeacherProfileForm({
           ))}
         </div>
       </fieldset>
-      <fieldset>
+      <fieldset disabled={entry && busy}>
         <legend>สีประจำตัว</legend>
         <div className="profile-colors">
           {colors.map(({ id, label }) => (
@@ -134,7 +140,7 @@ export function TeacherProfileForm({
         </div>
       </fieldset>
       {error && (
-        <p className="error-box" role="alert">
+        <p className="error-box" id={errorId} role="alert">
           {error}
         </p>
       )}

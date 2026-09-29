@@ -141,7 +141,7 @@
 .profile-colors .navy::before { background: #0a2540; }
 .profile-colors .gold::before { background: #b28200; }
 .teacher-heading-actions { display: flex; align-items: center; gap: 10px; }
-.teacher-profile-link { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 12px; padding: 5px 12px 5px 5px; background: #fff; color: var(--navy); cursor: pointer; }
+.teacher-profile-link { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 12px; padding: 5px 12px 5px 5px; background: #fff; color: var(--navy); cursor: pointer; text-decoration: none; }
 .teacher-profile-link .teacher-profile-badge { flex-basis: 38px; width: 38px; height: 38px; border-radius: 9px; }
 .teacher-profile-link svg { width: 21px; height: 21px; }
 @media(max-width:650px) {
@@ -150,7 +150,7 @@
   .teacher-profile-link { justify-content: center; }
 }
 .room-row.room-row-manage { display:flex; gap:0; padding:0 8px 0 0; cursor:default; }
-.room-open { display:grid; grid-template-columns:auto minmax(180px,1fr) auto auto auto; align-items:center; gap:18px; flex:1; min-width:0; min-height:88px; padding:18px 20px; border:0; border-radius:15px; background:transparent; color:var(--ink); text-align:left; cursor:pointer; }
+.room-open { display:grid; grid-template-columns:auto minmax(180px,1fr) auto auto auto; align-items:center; gap:18px; flex:1; min-width:0; min-height:88px; padding:18px 20px; border:0; border-radius:15px; background:transparent; color:var(--ink); text-align:left; cursor:pointer; text-decoration: none; }
 .room-open:focus-visible,.room-delete:focus-visible { outline:3px solid var(--cyan); outline-offset:2px; }
 .room-delete { display:grid; place-items:center; flex:0 0 44px; width:44px; height:44px; border:1px solid transparent; border-radius:10px; background:transparent; color:#a83a3a; cursor:pointer; }
 .room-delete:hover { border-color:#f1cccc; background:#fff2f2; }
