@@ -21,7 +21,7 @@ export function JoinForm({initialCode=""}:{initialCode?:string}){
     if(cleanNickname.length<2){setError("กรุณาใส่ชื่อเล่นอย่างน้อย 2 ตัวอักษร");return;}
     const result=await join(cleanCode,cleanNickname);
     if(!result){setError("ไม่พบห้องนี้ หรือคุณครูปิดห้องแล้ว กรุณาให้ครูสร้างห้องใหม่แล้วสแกน QR อีกครั้ง");return;}
-    router.push("/student/avatar");
+    router.push("/student/classroom");
   }
 
   return <AppShell title="เข้าร่วมห้อง"><main className="center-shell join-shell">
@@ -30,8 +30,8 @@ export function JoinForm({initialCode=""}:{initialCode?:string}){
         <span className="section-icon cyan"><DoorOpen/></span>
         <p className="eyebrow">สำหรับนักเรียน</p>
         <h1>เข้าห้องเรียน</h1>
-        <p>ใช้รหัสจากคุณครู แล้วสร้างตัวละครก่อนเลือกที่นั่ง</p>
-        <StepIndicator current={1} items={["เข้าห้อง","สร้างตัวละคร","เลือกที่นั่ง"]}/>
+        <p>ใส่รหัสห้องและชื่อเล่น แล้วเลือกที่นั่งได้เลย</p>
+        <StepIndicator current={1} items={["เข้าห้อง","เลือกที่นั่ง"]}/>
         <div className="privacy-note"><ShieldCheck/><span><strong>ไม่ต้องสมัครบัญชี</strong><small>ใช้เพียงชื่อเล่นสำหรับห้องนี้</small></span></div>
       </div>
       <form className="join-form form-stack" onSubmit={submit} noValidate>

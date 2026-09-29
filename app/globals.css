@@ -1228,3 +1228,7 @@ body{font-size:16px;line-height:1.55;background:linear-gradient(180deg,#f8fbfd 0
 }
 @media(max-width:520px) { .character-controls { grid-template-columns:1fr; } .choices-gender .character-option { padding:7px 12px; } .choices-hair .character-option,.choices-hat .character-option { flex-direction:row; flex-wrap:wrap; } .character-choices { gap:8px; } .character-option { padding:10px; } }
 @media(prefers-reduced-motion:reduce) { .character-creator * { animation:none!important; transition:none!important; } }
+
+/* Student identification uses names only. */
+.student-welcome{grid-template-columns:minmax(0,1fr) auto}
+@media(max-width:650px){.student-welcome{grid-template-columns:1fr}.teacher-live .leaderboard li{grid-template-columns:28px minmax(0,1fr) auto}.teacher-live .leader-progress{grid-column:2}.teacher-live .leader-score,.teacher-live .leaderboard .hand-badge{grid-column:3}}

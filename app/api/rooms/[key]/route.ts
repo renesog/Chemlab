@@ -1,13 +1,12 @@
 export const dynamic = "force-dynamic";
 import { findRoom, json, mutateRoom, parseRoom, rateAllowed } from "@/db/live-rooms";
 import { adminDb } from "@/lib/firebase/admin";
-import type { ActivityConfig, Avatar, Classroom, Student } from "@/lib/types";
+import type { ActivityConfig, Classroom, Student } from "@/lib/types";
 import { explanationFor, scoreForAttempts, scoreForCustomAttempts, validateSequence } from "@/lib/game";
 import { getTeacherUser } from "@/lib/auth";
 import { findQuestionKeys } from "@/db/question-keys";
 
-type Body = { action: string; token?: string; nickname?: string; avatar?: Avatar; deskId?: string; studentId?: string; status?: Classroom["status"]; activity?: ActivityConfig; locked?: boolean; levelId?: number; steps?: string[] };
-const defaultAvatar: Avatar = { gender: "boy", skin: "medium", hair: "short", hairColor: "black", shirt: "cyan", hat: "none" };
+type Body = { action: string; token?: string; nickname?: string; deskId?: string; studentId?: string; status?: Classroom["status"]; activity?: ActivityConfig; locked?: boolean; levelId?: number; steps?: string[] };
 
 export async function GET(_: Request, { params }: { params: Promise<{ key: string }> }) {
   const { key } = await params;
@@ -27,7 +26,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ ke
     if (!(await rateAllowed(`join:${row.id}:${address}`, 30))) return json({ error: "เข้าห้องถี่เกินไป กรุณารอสักครู่" }, 429);
     const nickname = body.nickname?.trim();
     if (!nickname || nickname.length < 2 || nickname.length > 24) return json({ error: "ชื่อเล่นต้องมี 2–24 ตัวอักษร" }, 400);
-    const student: Student = { id: crypto.randomUUID(), nickname, avatar: defaultAvatar, handRaised: false, currentLevel: parseRoom(row).activity.levelIds[0] ?? 1, totalScore: 0, wrongAttempts: 0, completed: [], skipped: [] };
+    const student: Student = { id: crypto.randomUUID(), nickname, handRaised: false, currentLevel: parseRoom(row).activity.levelIds[0] ?? 1, totalScore: 0, wrongAttempts: 0, completed: [], skipped: [] };
     const token = crypto.randomUUID() + crypto.randomUUID();
     const room = await mutateRoom(row.id, current => { if (current.status === "ENDED") throw new Error("room_ended"); return { ...current, students: [...current.students, student] }; });
     try {
@@ -119,7 +118,6 @@ function applyAction(room: Classroom, body: Body, teacher: boolean, studentId?: 
     throw new Error("invalid_teacher_action");
   }
   if (!studentId) throw new Error("unauthorized");
-  if (body.action === "avatar" && body.avatar && ["boy", "girl"].includes(body.avatar.gender) && ["none", "cap", "lab"].includes(body.avatar.hat)) return { ...room, students: room.students.map(s => s.id === studentId ? { ...s, avatar: body.avatar! } : s) };
   if (body.action === "hand") return { ...room, students: room.students.map(s => s.id === studentId ? { ...s, handRaised: !s.handRaised } : s) };
   if (body.action === "desk" && body.deskId) { const student = room.students.find(s => s.id === studentId); const current = room.desks.find(d => d.occupantId === studentId); const target = room.desks.find(d => d.id === body.deskId); if (!student || !target || target.locked || target.occupantId && target.occupantId !== studentId) throw new Error("desk_unavailable"); if (current?.locked) throw new Error("desk_locked"); return { ...room, desks: room.desks.map(d => d.id === target.id ? { ...d, occupantId: studentId } : d.occupantId === studentId ? { ...d, occupantId: undefined } : d), students: room.students.map(s => s.id === studentId ? { ...s, deskId: target.id } : s) }; }
   throw new Error("invalid_student_action");

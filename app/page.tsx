@@ -83,7 +83,7 @@ export default function Home() {
               <div className="role-copy">
                 <small>เข้าร่วมได้ทันที สะดวกรวดเร็ว</small>
                 <strong>ฉันเป็นนักเรียน</strong>
-                <span>สแกน QR หรือใส่รหัส 6 หลัก เลือกที่นั่ง สร้างตัวละคร และเริ่มแยกสาร</span>
+                <span>สแกน QR หรือใส่รหัส 6 หลัก ตั้งชื่อ เลือกที่นั่ง และเริ่มแยกสาร</span>
                 <span className="role-action-link student-link">
                   ใส่รหัสเข้าห้องเรียน <ArrowRight size={18} className="arrow-animated" />
                 </span>

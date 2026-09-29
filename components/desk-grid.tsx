@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Hand, LockKeyhole, Sparkles, Unlock, UserCheck } from "lucide-react";
-import { Avatar } from "@/components/avatar";
+import { Hand, LockKeyhole, Unlock, UserCheck } from "lucide-react";
 import type { Classroom, Desk } from "@/lib/types";
 import { deskState } from "@/lib/desk";
 
@@ -32,14 +31,6 @@ function DeskContent({ desk, room }: { desk: Desk; room: Classroom }) {
       <div className="desk-body">
         {student ? (
           <div className="desk-occupant">
-            <div className="desk-avatar-wrapper">
-              <Avatar value={student.avatar} size={36} />
-              {student.handRaised && (
-                <span className="hand-raise-indicator" title="ยกมือถามคุณครู">
-                  <Hand size={14} className="hand-wave-icon" />
-                </span>
-              )}
-            </div>
             <div className="occupant-details">
               <b className="occupant-name">{student.nickname}</b>
               {student.handRaised ? (
