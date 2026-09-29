@@ -7,7 +7,7 @@ import { replayAttempt } from "./attempt-receipt.ts";
 
 function fixture(): Classroom {
   return { id: "room", code: "ABCDEF", name: "test", subject: "chem", layout: "ROWS", status: "RUNNING", catalogVersion: 2,
-    desks: [{ id: "desk", label: "1", locked: false, occupantId: "student" }],
+    desks: [{ id: "desk", label: "1", locked: false, occupantId: "student", x: 0, y: 0 }],
     students: [{ id: "student", nickname: "test", deskId: "desk", handRaised: false, currentLevel: 1, totalScore: 0, wrongAttempts: 0, completed: [] }],
     activity: { mode: "PRESET", title: "test", levelIds: [1,2,3,4,5,6,7,8], pointsByLevel: {} }, createdAt: "" };
 }

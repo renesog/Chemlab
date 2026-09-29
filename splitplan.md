@@ -210,3 +210,13 @@
 - กำหนด outputFileTracingRoot เป็นโปรเจกต์ แก้ build ที่ไปตาม lockfile นอก workspace จน EPERM
 - ตรวจผ่าน: tests 29 / 29, ESLint เฉพาะไฟล์ที่แก้, production build รวม TypeScript; รายละเอียด manual QA อยู่ใน docs/game-completion-qa.md
 - คงค้าง: ทดสอบเบราว์เซอร์ครู 1 + นักเรียน 2 / touch / การตัด response จริงและ Firestore transaction concurrency; cua.getState ไม่มี browsers, ไม่พบ Firebase CLI จึงยังไม่ deploy rules และยังไม่ยืนยัน Vercel deployment
+
+## Phase 1 redesign — shared foundation (29 September 2026)
+
+- Applied ui-design: compact Thai science workspace, navy navigation, restrained cyan accent, neutral surfaces, 4px spacing scale and 44px controls. No targeted external references needed.
+- Added semantic design tokens and compatibility aliases, typography/color/spacing/radius foundations, shared button/input/card/status treatments and responsive shell/navigation.
+- Removed the old gradient/glass/pulsing shared shell styles. Nested shared panels use dividers; individual feature page composition remains unchanged.
+- Preserved routes, provider/state, APIs, Firebase and realtime logic. Navigation uses existing destinations with accessible Next.js links.
+- Fixed only missing x/y in an existing desk test fixture to unblock typecheck; no production game logic edits.
+- Validation: typecheck passed; tests 29/29; changed UI lint passed. Full lint ran and remains blocked by two existing explicit-any errors in lib/firebase/admin.ts (plus six existing warnings). Generated artifacts are excluded from lint.
+- Production build passed; browser visual/responsive/keyboard checks remain pending because no browser is connected. Details in docs/design-foundation.md.

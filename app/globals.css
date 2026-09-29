@@ -1,15 +1,9 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "../vendor/shadcn-tailwind-4.13.0.css";
+@import "./design-tokens.css";
 
-:root {
-  --navy: #0a2540; --navy-soft: #143b5d; --cyan: #0e9fad; --cyan-pale: #e7f8fa;
-  --yellow: #f4c542; --paper: #f5f8fb; --ink: #122436; --muted: #607285;
-  --line: #dce6ee; --white: #fff; --background: var(--paper); --foreground: var(--ink);
-  --card: var(--white); --card-foreground: var(--ink); --primary: var(--navy);
-  --primary-foreground: #fff; --secondary: var(--cyan-pale); --secondary-foreground: var(--navy);
-  --muted-foreground: var(--muted); --border: var(--line); --ring: var(--cyan); --radius: .875rem;
-}
+
 @theme inline {
   --color-background: var(--background); --color-foreground: var(--foreground);
   --color-card: var(--card); --color-card-foreground: var(--card-foreground);
@@ -17,6 +11,10 @@
   --color-secondary: var(--secondary); --color-secondary-foreground: var(--secondary-foreground);
   --color-muted-foreground: var(--muted-foreground); --color-border: var(--border);
   --color-ring: var(--ring); --radius-lg: var(--radius);
+  --color-input: var(--input); --color-destructive: var(--destructive);
+  --color-muted: var(--surface-subtle);
+  --color-accent: var(--accent); --color-accent-foreground: var(--accent-foreground);
+  --color-popover: var(--popover); --color-popover-foreground: var(--popover-foreground);
   --font-sans: "Noto Sans Thai", "Leelawadee UI", Tahoma, sans-serif;
 }
 * { box-sizing: border-box; }
@@ -505,129 +503,6 @@ body{font-size:16px;line-height:1.55;background:linear-gradient(180deg,#f8fbfd 0
 /* ══════════════════════════════════════════════════════════════════
    MODERN APPSHELL & HEADER POLISH
    ══════════════════════════════════════════════════════════════════ */
-.modern-app-shell {
-  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
-  min-height: 100svh;
-}
-
-.modern-header {
-  height: 74px !important;
-  backdrop-filter: blur(16px);
-  background: rgba(255, 255, 255, 0.88) !important;
-  border-bottom: 1px solid rgba(220, 230, 238, 0.8) !important;
-  box-shadow: 0 4px 20px rgba(10, 37, 64, 0.03);
-}
-
-.modern-brand-btn {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.modern-brand-btn .brand-mark {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, var(--navy) 0%, #173d63 100%);
-  box-shadow: 0 4px 12px rgba(10, 37, 64, 0.15);
-}
-
-.modern-back-btn {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  border: 1.5px solid #cbd5e1;
-  background: #ffffff;
-  color: var(--navy);
-  display: grid;
-  place-items: center;
-  transition: all 0.2s ease;
-}
-.modern-back-btn:hover {
-  border-color: var(--cyan);
-  background: var(--cyan-pale);
-  transform: translateX(-2px);
-}
-
-.modern-status-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 14px;
-  border-radius: 999px;
-  background: #ecfdf5;
-  border: 1px solid #a7f3d0;
-  color: #065f46;
-  font-size: 0.82rem;
-  font-weight: 700;
-}
-
-.live-pulse-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #10b981;
-  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-  animation: pulse-dot 1.8s infinite;
-}
-
-@keyframes pulse-dot {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-  70% { transform: scale(1); box-shadow: 0 0 0 7px rgba(16, 185, 129, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-}
-
-.modern-loading-state {
-  min-height: calc(100svh - 74px);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-}
-.loading-icon-wrapper {
-  position: relative;
-  width: 72px;
-  height: 72px;
-  display: grid;
-  place-items: center;
-  border-radius: 22px;
-  background: #e0f2fe;
-  color: #0284c7;
-  box-shadow: 0 8px 24px rgba(2, 132, 199, 0.15);
-}
-.loading-flask-anim {
-  animation: flask-wiggle 2s infinite ease-in-out;
-}
-@keyframes flask-wiggle {
-  0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(-8deg); }
-  75% { transform: rotate(8deg); }
-}
-
-.modern-step-indicator {
-  margin: 0 auto 32px;
-  max-width: 600px;
-}
-.modern-step-indicator li>span {
-  width: 38px;
-  height: 38px;
-  font-size: 0.95rem;
-  transition: all 0.25s ease;
-}
-.modern-step-indicator li.current>span {
-  transform: scale(1.1);
-}
-
-.modern-mobile-nav {
-  backdrop-filter: blur(16px);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 -4px 20px rgba(10, 37, 64, 0.06);
-}
-.modern-mobile-nav button.active {
-  color: var(--cyan);
-  font-weight: 800;
-}
-
 /* ══════════════════════════════════════════════════════════════════
    INTERACTIVE DESK LAYOUT EDITOR (จัดผังและย้ายโต๊ะ)
    ══════════════════════════════════════════════════════════════════ */

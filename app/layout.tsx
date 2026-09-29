@@ -4,6 +4,7 @@ import "./challenge.css";
 import "./virtual-lab.css";
 import "./teacher-account.css";
 import "./question-builder.css";
+import "./foundation.css";
 import { DemoProvider } from "@/lib/demo-store";
 
 export const metadata: Metadata = {
